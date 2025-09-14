@@ -41,10 +41,11 @@ class _SplashScreenState extends State<SplashScreen> {
       final data = doc.data();
 
       if (data == null || (data['roleSetupCompleted'] ?? false) == false) {
-        // 🟠 Signed in but no role → UserRole page
+        // 🟠 Signed in but no role setup → UserRole page
         Future.microtask(() => context.push('/userRole'));
       } else {
-        // 🔵 Signed in and role setup complete → Home
+        final role = data['role'] ?? 'disposer'; // default to disposer if missing
+
         SnackbarUtils.alert(
           context,
           "Welcome back ${data['displayName'] ?? 'User'}! 🎉",
@@ -54,7 +55,14 @@ class _SplashScreenState extends State<SplashScreen> {
           icon: Icons.check_circle_rounded,
           iconColor: Colors.greenAccent,
         );
-        Future.microtask(() => context.push('/home'));
+
+        if (role == 'driver') {
+          // 👷 Driver role → Driver Home
+          Future.microtask(() => context.push('/dHome'));
+        } else {
+          // 🏡 Disposer (user) role → User Home
+          Future.microtask(() => context.push('/uHome'));
+        }
       }
     } catch (e) {
       // 🔴 Firestore fetch failed → Fallback to Onboarding

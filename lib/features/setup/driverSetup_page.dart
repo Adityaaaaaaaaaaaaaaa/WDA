@@ -169,7 +169,7 @@ class _DriverSetupPageState extends State<DriverSetupPage>
         'roleSetupCompleted': true,
       }, SetOptions(merge: true));
 
-      context.push('/home');
+      context.push('/dhome');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

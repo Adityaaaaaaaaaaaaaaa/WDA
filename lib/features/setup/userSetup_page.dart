@@ -91,7 +91,7 @@ class _UserSetupPageState extends State<UserSetupPage>
         'roleSetupCompleted': true,
       }, SetOptions(merge: true));
 
-      context.push('/home');
+      context.push('/uHome');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

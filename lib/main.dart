@@ -16,6 +16,7 @@ import 'features/setup/driverSetup_page.dart';
 import 'features/setup/userSetup_page.dart';
 import 'features/setup/user_role_page.dart';
 import 'features/splash/splash_screen.dart';
+import 'features/user/home/uHome_page.dart';
 import 'utils/adaptive_transition.dart';
 
 
@@ -75,6 +76,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/driverSetup',
       builder: (context, state) => const DriverSetupPage(),
+    ),
+    GoRoute(
+      path: '/uHome',
+      builder: (context, state) => const UHomePage(),
     ),
   ],
 );
