@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,8 @@ import 'config/firebase_options.dart';
 import 'config/performance.dart';
 import 'features/auth/signin_page.dart';
 import 'features/onboarding/onboarding.dart';
+import 'features/setup/driverSetup_page.dart';
+import 'features/setup/userSetup_page.dart';
 import 'features/setup/user_role_page.dart';
 import 'features/splash/splash_screen.dart';
 import 'utils/adaptive_transition.dart';
@@ -28,7 +31,16 @@ Future<void> main() async {
     persistenceEnabled: true,
   );
   await GoogleSignIn.instance.initialize();
-  //await dotenv.load(fileName: ".env");
+  try {
+    if (await File('.env').exists()) {
+      await dotenv.load(fileName: ".env");
+      debugPrint("\x1B[32m[dotenv] .env file loaded successfully\x1B[0m");
+    } else {
+      debugPrint("\x1B[33m[dotenv] .env file not found, skipping...\x1B[0m");
+    }
+  } catch (e) {
+    debugPrint("\x1B[31m[dotenv] Failed to load .env: $e\x1B[0m");
+  }
   debugPrint = (String? message, {int? wrapWidth}) {};
   runApp(const ProviderScope(child: MyApp()));
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -55,6 +67,14 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/userRole',
       builder: (context, state) => const UserRolePage(),
+    ),
+    GoRoute(
+      path: '/userSetup',
+      builder: (context, state) => const UserSetupPage(),
+    ),
+    GoRoute(
+      path: '/driverSetup',
+      builder: (context, state) => const DriverSetupPage(),
     ),
   ],
 );

@@ -21,14 +21,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkSession() async {
-    // Small delay so the splash is visible
+    // Small delay so splash is visible
     await Future.delayed(const Duration(milliseconds: 2500));
 
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      // Not signed in → Sign In page
-      Future.microtask(() => context.go('/signup'));
+      // 🟢 New / not signed-in user → Onboarding
+      Future.microtask(() => context.go('/onboarding'));
       return;
     }
 
@@ -40,26 +40,25 @@ class _SplashScreenState extends State<SplashScreen> {
 
       final data = doc.data();
 
-      if (data == null || !(data['roleSetupCompleted'] ?? false)) {
-        // Signed in but role not setup → UserRole page
+      if (data == null || (data['roleSetupCompleted'] ?? false) == false) {
+        // 🟠 Signed in but no role → UserRole page
         Future.microtask(() => context.go('/userRole'));
       } else {
-        // Signed in and role setup complete → Home
+        // 🔵 Signed in and role setup complete → Home
         SnackbarUtils.alert(
           context,
-          "Welcome back ${data['displayName'] ?? 'User'}!",
+          "Welcome back ${data['displayName'] ?? 'User'}! 🎉",
           typeInfo: TypeInfo.success,
           position: MessagePosition.top,
           duration: 4,
           icon: Icons.check_circle_rounded,
           iconColor: Colors.greenAccent,
         );
-
         Future.microtask(() => context.go('/home'));
       }
     } catch (e) {
-      // Firestore fetch failed → fallback to signin
-      Future.microtask(() => context.go('/signup'));
+      // 🔴 Firestore fetch failed → Fallback to Onboarding
+      Future.microtask(() => context.go('/onboarding'));
     }
   }
 

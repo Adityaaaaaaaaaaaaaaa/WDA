@@ -9,11 +9,7 @@ final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 /// Background images to precache for the home screen
 const List<String> kHomeBgAssets = [
-  'assets/images/home/food_plate_1.png',
-  'assets/images/home/food_plate_2.png',
-  'assets/images/home/food_plate_3.png',
-  'assets/images/home/food_plate_4.png',
-  'assets/images/home/food_plate_5.png',
+  'assets/signup.png',
 ];
 
 /// Runs at startup to apply system-level tweaks
