@@ -1,0 +1,80 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
+import '/utils/colors.dart';
+import '/utils/lottie_animation.dart';
+import '/utils/snackbar.dart';
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    // Small delay so the splash is visible
+    await Future.delayed(const Duration(milliseconds: 2500));
+
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      // Not signed in → Sign In page
+      Future.microtask(() => context.go('/signup'));
+      return;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      final data = doc.data();
+
+      if (data == null || !(data['roleSetupCompleted'] ?? false)) {
+        // Signed in but role not setup → UserRole page
+        Future.microtask(() => context.go('/userRole'));
+      } else {
+        // Signed in and role setup complete → Home
+        SnackbarUtils.alert(
+          context,
+          "Welcome back ${data['displayName'] ?? 'User'}!",
+          typeInfo: TypeInfo.success,
+          position: MessagePosition.top,
+          duration: 4,
+          icon: Icons.check_circle_rounded,
+          iconColor: Colors.greenAccent,
+        );
+
+        Future.microtask(() => context.go('/home'));
+      }
+    } catch (e) {
+      // Firestore fetch failed → fallback to signin
+      Future.microtask(() => context.go('/signup'));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: bgColor(context),
+      body: Center(
+        child: LottieOverlay(
+          assetPath: 'assets/animations/eco_splash.json',
+          width: 220,
+          height: 220,
+          backgroundColor: Colors.transparent,
+        ),
+      ),
+    );
+  }
+}
