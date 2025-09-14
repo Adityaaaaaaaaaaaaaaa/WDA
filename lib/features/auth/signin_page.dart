@@ -64,7 +64,7 @@ class _SignInPageState extends State<SignInPage> with TickerProviderStateMixin {
 
       await FirebaseAuth.instance.signInWithCredential(credential);
 
-      context.go('/userRole');
+      context.push('/userRole');
     } catch (e) {
       SnackbarUtils.alert(
         context,

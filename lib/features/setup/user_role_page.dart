@@ -129,7 +129,7 @@ class UserRolePage extends StatelessWidget {
               description:
                   "Your trash won’t walk itself to the bin. Book a pickup, sit back, and pretend you're saving the planet 🌍.",
               onTap: () {
-                context.go('/userSetup');
+                context.push('/userSetup');
               },
               color: Colors.green,
             ),
@@ -140,7 +140,7 @@ class UserRolePage extends StatelessWidget {
               description:
                   "Be the hero nobody asked for 🚛. Pick up other people's garbage and get paid while smelling... nature.",
               onTap: () {
-                context.go('/driverSetup');
+                context.push('/driverSetup');
               },
               color: Colors.blue,
             ),
