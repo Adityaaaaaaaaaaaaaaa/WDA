@@ -132,7 +132,7 @@ class _URequestPageState extends State<URequestPage>
                 AnimatedGlassCard(
                   animation: _animController,
                   title: "Pick Your Trash 🤔",
-                  subtitle: "Select one or many",
+                  subtitle: "Select one or many (Hold for details)",
                   child: WasteTypeGrid(
                     initialSelected: _wasteTypes,
                     wasteDetails: _wasteDetails,

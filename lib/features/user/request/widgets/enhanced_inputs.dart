@@ -110,7 +110,7 @@ class EnhancedDateField extends StatelessWidget {
       decoration: _boxDecoration(Colors.blue),
       child: TextFormField(
         readOnly: true,
-        decoration: _inputDecoration("Pick a Date 📅", Icons.calendar_today, Colors.blue)
+        decoration: _inputDecoration("Date 📅", Icons.calendar_today, Colors.blue)
             .copyWith(hintText: "When chaos strikes..."),
         onTap: () async {
           final picked = await showDatePicker(
@@ -159,7 +159,7 @@ class EnhancedTimeField extends StatelessWidget {
       decoration: _boxDecoration(Colors.purple),
       child: TextFormField(
         readOnly: true,
-        decoration: _inputDecoration("Pick a Time ⏰", Icons.access_time, Colors.purple)
+        decoration: _inputDecoration("Time ⏰", Icons.access_time, Colors.purple)
             .copyWith(hintText: "When magic happens..."),
         onTap: () async {
           final picked = await showTimePicker(
@@ -213,8 +213,7 @@ class EnhancedTextField extends StatelessWidget {
       child: TextFormField(
         controller: controller,
         maxLines: maxLines,
-        decoration: _inputDecoration(label, icon, Colors.green)
-            .copyWith(hintText: hintText),
+        decoration: _inputDecoration(label, icon, Colors.green).copyWith(hintText: hintText),
       ),
     );
   }
