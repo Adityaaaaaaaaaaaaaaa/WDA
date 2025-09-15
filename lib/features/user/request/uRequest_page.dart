@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import '../widgets/uAppBar.dart';
 import '../widgets/uNavBar.dart';
 import 'widgets/animated_glass_card.dart';
@@ -30,61 +29,22 @@ class _URequestPageState extends State<URequestPage>
   // Animations
   late AnimationController _animController;
 
-  // Waste details (points, sass, rarity etc.)
-  final Map<String, Map<String, dynamic>> _wasteDetails = {
-    "Garden/Yard": {
-      "points": 15,
-      "sass": "Mother Nature approved! 🌿",
-      "description": "Leaves, grass, branches - nature's own mess",
-      "difficulty": "Easy Peasy",
-      "rarity": "Common"
-    },
-    "Furniture": {
-      "points": 35,
-      "sass": "Your ex's couch finally getting evicted? 😏",
-      "description": "Chairs, tables, cursed IKEA shelves",
-      "difficulty": "Heavy Duty",
-      "rarity": "Uncommon"
-    },
-    "Construction": {
-      "points": 50,
-      "sass": "Someone's DIY project went VERY wrong 🔨",
-      "description": "Concrete, wood, tiles, broken dreams",
-      "difficulty": "Professional",
-      "rarity": "Rare"
-    },
-    "Haunted Doll": {
-      "points": 1337,
-      "sass": "Annabelle's cousin needs a new home 👻",
-      "description": "Definitely cursed, probably evil",
-      "difficulty": "Supernatural",
-      "rarity": "Cursed"
-    },
-    "Ex's Belongings": {
-      "points": 666,
-      "sass": "Time to Marie Kondo that baggage 💔",
-      "description": "Emotional baggage in physical form",
-      "difficulty": "Therapeutic",
-      "rarity": "Toxic Rare"
-    },
-    // … add the rest here (Electronics, Tires, Mystery Box, etc.)
-  };
-
   final Map<String, Map<String, dynamic>> _sizeDetails = {
-    "Tiny (1-2 items)": {"multiplier": 1.0, "sass": "Smol bean energy 🌱"},
-    "Small (3-5 items)": {"multiplier": 1.2, "sass": "Cute and manageable ✨"},
-    "Medium (6-10 items)": {"multiplier": 1.5, "sass": "Getting serious now 💪"},
-    "Large (11-20 items)": {"multiplier": 2.0, "sass": "Big energy, big points 🔥"},
-    "XL (20+ items)": {"multiplier": 2.5, "sass": "Absolute unit! 🦣"},
-    "Siege Engine": {"multiplier": 10.0, "sass": "Medieval warfare vibes ⚔️"},
+    "Tiny (1-2 items)": { "multiplier": 1.0, },
+    "Small (3-5 items)": { "multiplier": 1.5, },
+    "Medium (6-10 items)": { "multiplier": 2.0, },
+    "Large (11-20 items)": { "multiplier": 3.0, },
+    "XL (20+ items)": { "multiplier": 5.0, },
+    "Mountain (50+ items)": { "multiplier": 8.0, },
+    "A lot": { "multiplier": 10.0, },
   };
 
   final List<String> _urgencyOptions = [
-    "Whenever (I'm zen 🧘)",
-    "Soon (1-2 days 🙏)",
+    "ASAP ( now !!! 😱)",
     "Urgent (Today! 🔥)",
-    "ASAP (Landlord incoming 😱)",
-    "Nuclear Emergency (Send help 🚨)",
+    "Soon (1-2 days 🙏)",
+    "Within 3-4 days (No rush, but soon ⏳)",
+    "Whenever (I'm zen 🧘)",
   ];
 
   @override
@@ -106,7 +66,7 @@ class _URequestPageState extends State<URequestPage>
   int get ecoPoints {
     int base = _wasteTypes.fold(
       0,
-      (sum, type) => sum + ((_wasteDetails[type]?["points"] as int?) ?? 0),
+      (sum, type) => sum + (wasteTypeLookup[type]?.points ?? 0),
     );
     double multiplier = _sizeDetails[_size]?["multiplier"] ?? 1.0;
     return (base * multiplier).round();
@@ -135,7 +95,6 @@ class _URequestPageState extends State<URequestPage>
                   subtitle: "Select one or many (Hold for details)",
                   child: WasteTypeGrid(
                     initialSelected: _wasteTypes,
-                    wasteDetails: _wasteDetails,
                     onChanged: (sel) => setState(() => _wasteTypes = sel),
                   ),
                 ),
