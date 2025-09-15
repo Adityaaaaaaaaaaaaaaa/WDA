@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../widgets/uAppBar.dart';
 import '../widgets/uNavBar.dart';
 import 'widgets/animated_glass_card.dart';
 import 'widgets/waste_type_grid.dart';
+import 'widgets/enhanced_inputs.dart';
 
 class URequestPage extends StatefulWidget {
   const URequestPage({super.key});
@@ -13,7 +15,7 @@ class URequestPage extends StatefulWidget {
 }
 
 class _URequestPageState extends State<URequestPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
   // Selections
@@ -25,39 +27,72 @@ class _URequestPageState extends State<URequestPage>
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
 
-  // Animation for glow cards
+  // Animations
   late AnimationController _animController;
 
-  // Sample points system
-  final Map<String, int> _wastePoints = {
-    "Garden/Yard": 10,
-    "Furniture": 20,
-    "Construction": 30,
-    "Electronics": 25,
-    "General Waste": 5,
-    "Batteries": 40,
-    "Paint/Chemical": 50,
-    "Kitchen Junk": 15,
-    "Mattress": 20,
-    "Mystery Box": 100,
-    "Radioactive (pls no)": 999,
-    "Haunted Doll": 666,
+  // Waste details (points, sass, rarity etc.)
+  final Map<String, Map<String, dynamic>> _wasteDetails = {
+    "Garden/Yard": {
+      "points": 15,
+      "sass": "Mother Nature approved! 🌿",
+      "description": "Leaves, grass, branches - nature's own mess",
+      "difficulty": "Easy Peasy",
+      "rarity": "Common"
+    },
+    "Furniture": {
+      "points": 35,
+      "sass": "Your ex's couch finally getting evicted? 😏",
+      "description": "Chairs, tables, cursed IKEA shelves",
+      "difficulty": "Heavy Duty",
+      "rarity": "Uncommon"
+    },
+    "Construction": {
+      "points": 50,
+      "sass": "Someone's DIY project went VERY wrong 🔨",
+      "description": "Concrete, wood, tiles, broken dreams",
+      "difficulty": "Professional",
+      "rarity": "Rare"
+    },
+    "Haunted Doll": {
+      "points": 1337,
+      "sass": "Annabelle's cousin needs a new home 👻",
+      "description": "Definitely cursed, probably evil",
+      "difficulty": "Supernatural",
+      "rarity": "Cursed"
+    },
+    "Ex's Belongings": {
+      "points": 666,
+      "sass": "Time to Marie Kondo that baggage 💔",
+      "description": "Emotional baggage in physical form",
+      "difficulty": "Therapeutic",
+      "rarity": "Toxic Rare"
+    },
+    // … add the rest here (Electronics, Tires, Mystery Box, etc.)
   };
 
-  final Map<String, double> _sizeMultiplier = {
-    "Small (1-2 bags)": 1,
-    "Medium (3-6 bags)": 1.5,
-    "Large (7+ bags or bulky)": 2,
-    "Siege Engine (…please don't)": 5,
+  final Map<String, Map<String, dynamic>> _sizeDetails = {
+    "Tiny (1-2 items)": {"multiplier": 1.0, "sass": "Smol bean energy 🌱"},
+    "Small (3-5 items)": {"multiplier": 1.2, "sass": "Cute and manageable ✨"},
+    "Medium (6-10 items)": {"multiplier": 1.5, "sass": "Getting serious now 💪"},
+    "Large (11-20 items)": {"multiplier": 2.0, "sass": "Big energy, big points 🔥"},
+    "XL (20+ items)": {"multiplier": 2.5, "sass": "Absolute unit! 🦣"},
+    "Siege Engine": {"multiplier": 10.0, "sass": "Medieval warfare vibes ⚔️"},
   };
+
+  final List<String> _urgencyOptions = [
+    "Whenever (I'm zen 🧘)",
+    "Soon (1-2 days 🙏)",
+    "Urgent (Today! 🔥)",
+    "ASAP (Landlord incoming 😱)",
+    "Nuclear Emergency (Send help 🚨)",
+  ];
 
   @override
   void initState() {
     super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    )..repeat();
+    _animController =
+        AnimationController(vsync: this, duration: const Duration(seconds: 6))
+          ..repeat();
   }
 
   @override
@@ -71,9 +106,9 @@ class _URequestPageState extends State<URequestPage>
   int get ecoPoints {
     int base = _wasteTypes.fold(
       0,
-      (sum, type) => sum + (_wastePoints[type] ?? 0),
+      (sum, type) => sum + ((_wasteDetails[type]?["points"] as int?) ?? 0),
     );
-    double multiplier = _sizeMultiplier[_size] ?? 1;
+    double multiplier = _sizeDetails[_size]?["multiplier"] ?? 1.0;
     return (base * multiplier).round();
   }
 
@@ -83,8 +118,8 @@ class _URequestPageState extends State<URequestPage>
       backgroundColor: const Color(0xFFF5F7FA),
       extendBody: false,
       extendBodyBehindAppBar: true,
-      appBar: UAppBar( title: "Request a Disposal",),
-      bottomNavigationBar: UNavBar(currentIndex: 3),
+      appBar: const UAppBar(title: "Trash Talk & Disposal 🗑️✨"),
+      bottomNavigationBar: const UNavBar(currentIndex: 3),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16.w),
@@ -96,10 +131,11 @@ class _URequestPageState extends State<URequestPage>
                 // Waste Type
                 AnimatedGlassCard(
                   animation: _animController,
-                  title: "Select Waste Type",
-                  subtitle: "Pick one or more",
+                  title: "Pick Your Trash 🤔",
+                  subtitle: "Select one or many",
                   child: WasteTypeGrid(
                     initialSelected: _wasteTypes,
+                    wasteDetails: _wasteDetails,
                     onChanged: (sel) => setState(() => _wasteTypes = sel),
                   ),
                 ),
@@ -108,13 +144,13 @@ class _URequestPageState extends State<URequestPage>
                 // Size
                 AnimatedGlassCard(
                   animation: _animController,
-                  title: "Size",
+                  title: "Size Matters 📏",
                   subtitle: "How much junk?",
-                  child: _buildDropdown(
+                  child: EnhancedDropdown(
                     label: "Choose size",
                     value: _size,
-                    items: _sizeMultiplier.keys.toList(),
-                    icon: Icons.shopping_bag_outlined,
+                    items: _sizeDetails.keys.toList(),
+                    icon: Icons.straighten,
                     onChanged: (v) => setState(() => _size = v),
                   ),
                 ),
@@ -123,47 +159,64 @@ class _URequestPageState extends State<URequestPage>
                 // Urgency
                 AnimatedGlassCard(
                   animation: _animController,
-                  title: "Urgency",
-                  subtitle: "When do you want it gone?",
-                  child: _buildDropdown(
+                  title: "Urgency 🚨",
+                  subtitle: "How fast?",
+                  child: SimpleDropdown(
                     label: "Select urgency",
                     value: _urgency,
-                    items: const [
-                      "Whenever",
-                      "Soon (1-2 days)",
-                      "Urgent (same day)",
-                      "Nuclear Emergency 🚨"
-                    ],
-                    icon: Icons.access_time,
+                    items: _urgencyOptions,
+                    icon: Icons.timer,
                     onChanged: (v) => setState(() => _urgency = v),
                   ),
                 ),
                 SizedBox(height: 20.h),
 
-                // Pickup Date + Time
+                // Date + Time
                 Row(
                   children: [
-                    Expanded(child: _buildDateField()),
+                    Expanded(
+                      child: EnhancedDateField(
+                        date: _pickupDate,
+                        onPicked: (d) => setState(() => _pickupDate = d),
+                      ),
+                    ),
                     SizedBox(width: 12.w),
-                    Expanded(child: _buildTimeField()),
+                    Expanded(
+                      child: EnhancedTimeField(
+                        time: _pickupTime,
+                        onPicked: (t) => setState(() => _pickupTime = t),
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(height: 20.h),
 
                 // Address
-                _buildTextField(
-                  controller: _addressController,
-                  label: "Pickup Location",
-                  icon: Icons.location_on_outlined,
+                AnimatedGlassCard(
+                  animation: _animController,
+                  title: "Location 📍",
+                  subtitle: "Where should we pick it up?",
+                  child: EnhancedTextField(
+                    controller: _addressController,
+                    label: "Pickup Location",
+                    icon: Icons.location_on,
+                    hintText: "123 Trash Lane, Garbage City",
+                  ),
                 ),
                 SizedBox(height: 16.h),
 
                 // Notes
-                _buildTextField(
-                  controller: _notesController,
-                  label: "Additional Notes",
-                  icon: Icons.notes_outlined,
-                  maxLines: 3,
+                AnimatedGlassCard(
+                  animation: _animController,
+                  title: "Notes 📝",
+                  subtitle: "Anything else we should know?",
+                  child: EnhancedTextField(
+                    controller: _notesController,
+                    label: "Additional Notes",
+                    icon: Icons.notes,
+                    maxLines: 3,
+                    hintText: "It all started when I decided to clean my attic...",
+                  ),
                 ),
                 SizedBox(height: 20.h),
 
@@ -171,15 +224,16 @@ class _URequestPageState extends State<URequestPage>
                 if (_wasteTypes.isNotEmpty && _size != null)
                   AnimatedGlassCard(
                     animation: _animController,
-                    title: "Eco Points",
-                    subtitle: "Earn green karma 🌱",
+                    title: "Eco Points 🌱",
+                    subtitle: "Your reward for saving the planet",
                     child: Text(
-                      "+$ecoPoints points for this request",
+                      "+$ecoPoints points",
                       style: TextStyle(
-                        fontSize: 18.sp,
+                        fontSize: 20.sp,
                         fontWeight: FontWeight.bold,
                         color: Colors.green.shade700,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 SizedBox(height: 30.h),
@@ -188,22 +242,30 @@ class _URequestPageState extends State<URequestPage>
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade700,
-                    padding: EdgeInsets.symmetric(
-                      vertical: 16.h,
-                      horizontal: 24.w,
-                    ),
+                    padding:
+                        EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     elevation: 6,
                   ),
                   onPressed: () {
-                    if (_formKey.currentState!.validate()) {
+                    if (_formKey.currentState!.validate() &&
+                        _wasteTypes.isNotEmpty &&
+                        _size != null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
+                          backgroundColor: Colors.green.shade700,
                           content: Text(
                             "Booking confirmed ✅ You earned $ecoPoints eco-points!",
                           ),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.red.shade600,
+                          content: const Text("Please complete all fields 📝"),
                         ),
                       );
                     }
@@ -222,113 +284,6 @@ class _URequestPageState extends State<URequestPage>
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildDropdown({
-    required String label,
-    required String? value,
-    required List<String> items,
-    required IconData icon,
-    required Function(String?) onChanged,
-  }) {
-    return DropdownButtonFormField<String>(
-      isExpanded: true,
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Colors.green.shade700),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        filled: true,
-        fillColor: Colors.white,
-      ),
-      items: items
-          .map(
-            (e) => DropdownMenuItem(
-              value: e,
-              child: Text(
-                e,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
-    );
-  }
-
-  Widget _buildDateField() {
-    return TextFormField(
-      readOnly: true,
-      decoration: InputDecoration(
-        labelText: "Pickup Date",
-        prefixIcon: const Icon(Icons.date_range, color: Colors.blue),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        filled: true,
-        fillColor: Colors.white,
-      ),
-      onTap: () async {
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime.now(),
-          lastDate: DateTime(2030),
-        );
-        if (picked != null) setState(() => _pickupDate = picked);
-      },
-      controller: TextEditingController(
-        text: _pickupDate != null
-            ? "${_pickupDate!.day}/${_pickupDate!.month}/${_pickupDate!.year}"
-            : "",
-      ),
-    );
-  }
-
-  Widget _buildTimeField() {
-    return TextFormField(
-      readOnly: true,
-      decoration: InputDecoration(
-        labelText: "Pickup Time",
-        prefixIcon: const Icon(Icons.access_time, color: Colors.orange),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        filled: true,
-        fillColor: Colors.white,
-      ),
-      onTap: () async {
-        final picked =
-            await showTimePicker(context: context, initialTime: TimeOfDay.now());
-        if (picked != null) setState(() => _pickupTime = picked);
-      },
-      controller: TextEditingController(
-        text: _pickupTime != null ? _pickupTime!.format(context) : "",
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    int maxLines = 1,
-  }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: Colors.green.shade700),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
-        filled: true,
-        fillColor: Colors.white,
       ),
     );
   }
