@@ -15,17 +15,8 @@ class UHomePage extends StatefulWidget {
 }
 
 class _UHomePageState extends State<UHomePage> {
-  int _selectedIndex = 0;
   Map<String, dynamic>? _userData;
   bool _loading = true;
-
-  void _onNavTap(int index) {
-    setState(() => _selectedIndex = index);
-    // TODO: hook up navigation based on index later
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Tapped nav index: $index")),
-    );
-  }
 
   Future<void> _fetchUserData() async {
     try {
@@ -71,10 +62,7 @@ class _UHomePageState extends State<UHomePage> {
         photoUrl: photoUrl,
         text: "Welcome $displayName",
       ),
-      bottomNavigationBar: UNavBar(
-        currentIndex: _selectedIndex,
-        onTap: _onNavTap,
-      ),
+      bottomNavigationBar: UNavBar(currentIndex: 0),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
