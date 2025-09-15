@@ -61,14 +61,15 @@ class _UHomePageState extends State<UHomePage> {
   Widget build(BuildContext context) {
     final displayName = _userData?['displayName'] ?? "User";
     final ecoPoints = _userData?['ecoPoints'] ?? 0;
-    final photoUrl =
-        _userData?['photoUrl'] ?? FirebaseAuth.instance.currentUser?.photoURL;
+    final photoUrl = _userData?['photoUrl'] ?? FirebaseAuth.instance.currentUser?.photoURL;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
+      extendBody: false,
+      extendBodyBehindAppBar: true,
       appBar: UAppBar(
         photoUrl: photoUrl,
-        displayName: displayName,
+        text: "Welcome $displayName",
       ),
       bottomNavigationBar: UNavBar(
         currentIndex: _selectedIndex,
@@ -77,7 +78,8 @@ class _UHomePageState extends State<UHomePage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: EdgeInsets.only(top: 16.h),
+              cacheExtent: MediaQuery.of(context).size.height,
+              padding: EdgeInsets.only(top: 100.h),
               children: [
                 UGreetingCard(
                   name: displayName,
