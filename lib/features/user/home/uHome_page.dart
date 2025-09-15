@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../widgets/uAppBar.dart';
-import '../widgets/uGreetingCard.dart';
+import 'widgets/uGreetingCard.dart';
 import '../widgets/uNavBar.dart';
 
 class UHomePage extends StatefulWidget {
@@ -23,10 +23,7 @@ class _UHomePageState extends State<UHomePage> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
 
       if (doc.exists) {
         setState(() {
@@ -50,19 +47,16 @@ class _UHomePageState extends State<UHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = _userData?['displayName'] ?? "User";
+    final displayName = _userData?['displayName'] ??
+        FirebaseAuth.instance.currentUser?.displayName ??
+        "User";
     final ecoPoints = _userData?['ecoPoints'] ?? 0;
-    final photoUrl = _userData?['photoUrl'] ?? FirebaseAuth.instance.currentUser?.photoURL;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      extendBody: false,
       extendBodyBehindAppBar: true,
-      appBar: UAppBar(
-        photoUrl: photoUrl,
-        text: "Welcome $displayName",
-      ),
-      bottomNavigationBar: UNavBar(currentIndex: 0),
+      appBar: UAppBar(title: "Welcome $displayName"),
+      bottomNavigationBar: const UNavBar(currentIndex: 0),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(

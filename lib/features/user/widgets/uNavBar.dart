@@ -12,10 +12,10 @@ class UNavBar extends StatelessWidget {
 
   final List<_NavItem> _items = const [
     _NavItem(icon: Icons.home_rounded, label: "Home", route: "/uHome"),
-    _NavItem(icon: Icons.map_rounded, label: "Map", route: "/umap"),
-    _NavItem(icon: Icons.task_alt_rounded, label: "Tasks", route: "/utasks"),
-    _NavItem(icon: Icons.add_box_rounded, label: "Request", route: "/urequest"),
-    _NavItem(icon: Icons.person_rounded, label: "Profile", route: "/uprofile"),
+    _NavItem(icon: Icons.map_rounded, label: "Map", route: "/uMap"),
+    _NavItem(icon: Icons.task_alt_rounded, label: "Tasks", route: "/uTasks"),
+    _NavItem(icon: Icons.add_box_rounded, label: "Request", route: "/uRequest"),
+    _NavItem(icon: Icons.person_rounded, label: "Profile", route: "/uProfile"),
   ];
 
   @override

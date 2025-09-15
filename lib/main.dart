@@ -17,6 +17,7 @@ import 'features/setup/userSetup_page.dart';
 import 'features/setup/user_role_page.dart';
 import 'features/splash/splash_screen.dart';
 import 'features/user/home/uHome_page.dart';
+import 'features/user/request/uRequest_page.dart';
 import 'utils/adaptive_transition.dart';
 
 
@@ -80,6 +81,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/uHome',
       builder: (context, state) => const UHomePage(),
+    ),
+    GoRoute(
+      path: '/uRequest',
+      builder: (context, state) => const URequestPage(),
     ),
   ],
 );
