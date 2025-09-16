@@ -182,21 +182,23 @@ class _URequestPageState extends State<URequestPage>
                 SizedBox(height: 20.h),
 
                 // Eco Points Preview
+                // if (_wasteTypes.isNotEmpty && _size != null)
+                //   AnimatedGlassCard(
+                //     animation: _animController,
+                //     title: "Eco Points 🌱",
+                //     subtitle: "Your reward for saving the planet",
+                //     child: Text(
+                //       "+$ecoPoints points",
+                //       style: TextStyle(
+                //         fontSize: 20.sp,
+                //         fontWeight: FontWeight.bold,
+                //         color: Colors.green.shade700,
+                //       ),
+                //       textAlign: TextAlign.center,
+                //     ),
+                //   ),
                 if (_wasteTypes.isNotEmpty && _size != null)
-                  AnimatedGlassCard(
-                    animation: _animController,
-                    title: "Eco Points 🌱",
-                    subtitle: "Your reward for saving the planet",
-                    child: Text(
-                      "+$ecoPoints points",
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green.shade700,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
+                  EcoPointsCard(ecoPoints: ecoPoints),
                 SizedBox(height: 30.h),
 
                 // Confirm Button

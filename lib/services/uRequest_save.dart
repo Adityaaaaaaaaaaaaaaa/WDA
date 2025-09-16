@@ -15,19 +15,19 @@ class URequestService {
     required DateTime? pickupDateTime,
     required String address,
     required String notes,
-    required int ecoPoints,
+    required int ecoPoints, // full task points
     String source = "user_request",
   }) async {
     try {
       final user = _auth.currentUser;
       if (user == null) throw Exception("User not logged in");
 
-      // Make taskId include userId for easier querying later
       final String taskId = "${user.uid}_${_uuid.v4()}";
       final DateTime now = DateTime.now();
 
-      // QR string (driver will scan this)
-      final String qrCodeData = "task:$taskId:user:${user.uid}";
+      // breakdown
+      final int creationPoints = (ecoPoints / 2).floor();
+      final int completionPoints = ecoPoints - creationPoints;
 
       final taskData = {
         "taskId": taskId,
@@ -38,18 +38,22 @@ class URequestService {
         "pickupDateTime": pickupDateTime?.toIso8601String(),
         "address": address,
         "notes": notes,
-        "ecoPoints": ecoPoints,
+
+        // points system
+        "taskPoints": ecoPoints,
+        "creationPoints": creationPoints,
+        "completionPoints": completionPoints,
+        "awardedCompletion": false,
+
         "driverAssigned": false,
         "driverId": null,
         "createdAt": now.toIso8601String(),
         "updatedAt": now.toIso8601String(),
         "source": source,
 
-        // QR
-        "qrCodeData": qrCodeData,
+        "qrCodeData": "task:$taskId:user:${user.uid}",
         "qrCodeUsed": false,
 
-        // Status + Progress
         "status": "pending",
         "progressStages": {
           "accepted": false,
@@ -61,10 +65,10 @@ class URequestService {
         },
       };
 
-      // Save globally
+      // save globally
       await _db.collection("tasks").doc(taskId).set(taskData);
 
-      // Save inside user's history
+      // save inside user's history
       await _db
           .collection("users")
           .doc(user.uid)
@@ -72,14 +76,58 @@ class URequestService {
           .doc(taskId)
           .set({
         "taskId": taskId,
-        "ecoPoints": ecoPoints,
+        "taskPoints": ecoPoints,
+        "creationPoints": creationPoints,
+        "completionPoints": completionPoints,
+        "awardedCompletion": false,
         "status": "pending",
         "createdAt": now.toIso8601String(),
       });
+
+      // immediately add half points to user doc
+      await _db.collection("users").doc(user.uid).set({
+        "ecoPoints": FieldValue.increment(creationPoints),
+      }, SetOptions(merge: true));
 
       return taskId;
     } catch (e) {
       rethrow;
     }
+  }
+
+  /// Award remaining completion points when task is marked completed
+  Future<void> awardCompletionPoints(String taskId, String userId) async {
+    final taskRef = _db.collection("tasks").doc(taskId);
+    final taskSnap = await taskRef.get();
+    if (!taskSnap.exists) throw Exception("Task not found");
+
+    final data = taskSnap.data()!;
+    if (data["awardedCompletion"] == true) return; // already awarded
+
+    final int completionPoints = data["completionPoints"] ?? 0;
+
+    // update task
+    await taskRef.update({
+      "awardedCompletion": true,
+      "status": "completed",
+      "progressStages.completed": true,
+      "updatedAt": DateTime.now().toIso8601String(),
+    });
+
+    // update in user’s history subcollection
+    await _db
+        .collection("users")
+        .doc(userId)
+        .collection("tasks")
+        .doc(taskId)
+        .update({
+      "awardedCompletion": true,
+      "status": "completed",
+    });
+
+    // increment eco points for user
+    await _db.collection("users").doc(userId).set({
+      "ecoPoints": FieldValue.increment(completionPoints),
+    }, SetOptions(merge: true));
   }
 }
