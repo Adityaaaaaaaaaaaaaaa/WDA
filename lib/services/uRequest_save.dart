@@ -15,8 +15,9 @@ class URequestService {
     required DateTime? pickupDateTime,
     required String address,
     required String notes,
-    required int ecoPoints, // full task points
+    required int ecoPoints,
     String source = "user_request",
+    String taskType = "pickup", // new field
   }) async {
     try {
       final user = _auth.currentUser;
@@ -45,15 +46,23 @@ class URequestService {
         "completionPoints": completionPoints,
         "awardedCompletion": false,
 
+        // driver
         "driverAssigned": false,
         "driverId": null,
+        "driverName": null,
+        "driverSeen": false,
+
+        // lifecycle
         "createdAt": now.toIso8601String(),
         "updatedAt": now.toIso8601String(),
         "source": source,
+        "taskType": taskType,
 
+        // qr
         "qrCodeData": "task:$taskId:user:${user.uid}",
         "qrCodeUsed": false,
 
+        // status
         "status": "pending",
         "progressStages": {
           "accepted": false,
@@ -63,6 +72,12 @@ class URequestService {
           "atLandfill": false,
           "completed": false,
         },
+        "lastProgressStage": "pending",
+
+        // flags
+        "userDeleted": false,
+        "cancelledByUser": false,
+        "cancelledBySystem": false,
       };
 
       // save globally
@@ -82,6 +97,7 @@ class URequestService {
         "awardedCompletion": false,
         "status": "pending",
         "createdAt": now.toIso8601String(),
+        "userDeleted": false,
       });
 
       // immediately add half points to user doc
