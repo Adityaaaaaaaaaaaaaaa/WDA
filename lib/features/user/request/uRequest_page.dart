@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import '../../../services/uRequest_save.dart';
 import '../widgets/uAppBar.dart';
 import '../widgets/uNavBar.dart';
 import 'widgets/animated_glass_card.dart';
@@ -201,23 +203,78 @@ class _URequestPageState extends State<URequestPage>
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade700,
-                    padding:
-                        EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
+                    padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     elevation: 6,
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate() &&
                         _wasteTypes.isNotEmpty &&
-                        _size != null) {
+                        _size != null &&
+                        _addressController.text.trim().isNotEmpty
+                    ) {
+                      try {
+                        final service = URequestService();
+
+                        DateTime? pickupDateTime;
+                        if (_pickupDate != null && _pickupTime != null) {
+                          pickupDateTime = DateTime(
+                            _pickupDate!.year,
+                            _pickupDate!.month,
+                            _pickupDate!.day,
+                            _pickupTime!.hour,
+                            _pickupTime!.minute,
+                          );
+                        }
+
+                        final taskId = await service.createTask(
+                          wasteTypes: _wasteTypes,
+                          size: _size!,
+                          urgency: _urgency ?? _urgencyOptions[4], // fallback to "Whenever"
+                          pickupDateTime: pickupDateTime,
+                          address: _addressController.text.trim(),
+                          notes: _notesController.text.trim(),
+                          ecoPoints: ecoPoints,
+                        );
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: Colors.green.shade700,
+                            content: Text("Booking confirmed ✅ Task saved with ID: $taskId"),
+                          ),
+                        );
+
+                        context.push('/uHome');
+
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: Colors.red.shade600,
+                            content: Text("Failed to save task ❌ $e"),
+                          ),
+                        );
+                      }
+                    } else if (_wasteTypes.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          backgroundColor: Colors.green.shade700,
-                          content: Text(
-                            "Booking confirmed ✅ You earned $ecoPoints eco-points!",
-                          ),
+                          backgroundColor: Colors.red.shade600,
+                          content: const Text("Please select waste type and size 🗑️"),
+                        ),
+                      );
+                    } else if (_addressController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.red.shade600,
+                          content: const Text("Please enter a pickup location 📍"),
+                        ),
+                      );
+                    } else if (_size == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.red.shade600,
+                          content: const Text("Please select the size of your waste 📏"),
                         ),
                       );
                     } else {
