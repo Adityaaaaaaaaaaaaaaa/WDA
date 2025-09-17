@@ -99,7 +99,8 @@ class UTasksPage extends StatelessWidget {
 
                       final tasks = snapshot.data!
                           .map((data) => TaskModel.fromMap(data))
-                          .where((task) => task.status == "completed")
+                          .where((task) =>
+                              task.status == "completed" || task.status == "cancelled" || task.userDeleted)
                           .toList();
 
                       if (tasks.isEmpty) {

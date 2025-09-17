@@ -1,8 +1,8 @@
-// lib/features/user/tasks/widgets/task_card.dart
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:glass/glass.dart';
 import '../../../../model/task_model.dart';
+import '../../widgets/status_chip.dart';
 
 class TaskCard extends StatelessWidget {
   final TaskModel task;
@@ -16,143 +16,145 @@ class TaskCard extends StatelessWidget {
     this.onTap,
   });
 
-  String get formattedDate {
-    if (task.pickupDateTime == null) return "No date set";
-    final date = task.pickupDateTime!;
-    return "${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}";
+  Color _statusColor(String status, bool userDeleted, bool cancelled) {
+    if (userDeleted) return Colors.grey;
+    if (cancelled) return Colors.red;
+    switch (status) {
+      case "pending":
+        return Colors.orange;
+      case "in_progress":
+        return Colors.blue;
+      case "completed":
+        return Colors.green;
+      default:
+        return Colors.black54;
+    }
+  }
+
+  String _statusLabel(TaskModel task) {
+    if (task.userDeleted) return "Deleted";
+    if (task.cancelledByUser) return "Cancelled";
+    return task.status;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 16.h),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20.r),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.15),
-            Colors.white.withOpacity(0.05),
+    final statusColor = _statusColor(task.status, task.userDeleted, task.cancelledByUser);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 16.h),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.grey.shade300, width: 1.2), // ✅ subtle border
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
           ],
         ),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20.r),
-        onTap: onTap,
-        child: Container(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Title row (Waste type + Points)
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      task.wasteTypes.join(", "),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16.sp,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade600.withOpacity(0.9),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Text(
-                      "+${task.taskPoints} pts",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10.h),
-
-              // Address
-              Row(
-                children: [
-                  const Icon(Icons.location_on, size: 16, color: Colors.redAccent),
-                  SizedBox(width: 6.w),
-                  Expanded(
-                    child: Text(
-                      task.address,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13.sp, color: Colors.grey[800]),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 6.h),
-
-              // Date
-              Row(
-                children: [
-                  const Icon(Icons.access_time, size: 16, color: Colors.blueGrey),
-                  SizedBox(width: 6.w),
-                  Expanded(
-                    child: Text(
-                      formattedDate,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 13.sp, color: Colors.grey[700]),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 6.h),
-
-              // Status
-              Row(
-                children: [
-                  const Icon(Icons.info_outline, size: 16, color: Colors.blue),
-                  SizedBox(width: 6.w),
-                  Text(
-                    task.status.toUpperCase(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Row → Waste type + Points
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    task.wasteTypes.join(", "),
                     style: TextStyle(
-                      fontSize: 13.sp,
                       fontWeight: FontWeight.bold,
-                      color: task.status == "completed"
-                          ? Colors.green
-                          : Colors.orange,
+                      fontSize: 15.sp,
+                      color: Colors.black87,
                     ),
-                  ),
-                ],
-              ),
-
-              // Delete button (if available)
-              if (onDelete != null)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: onDelete,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-            ],
-          ),
+                EcoPointsChip(points: task.taskPoints),
+              ],
+            ),
+            SizedBox(height: 10.h),
+
+            // Address row
+            Row(
+              children: [
+                const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                SizedBox(width: 4.w),
+                Expanded(
+                  child: Text(
+                    task.address,
+                    style: TextStyle(fontSize: 12.sp, color: Colors.black87),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8.h),
+
+            // inside the chips row
+            Wrap(
+              spacing: 6.w,
+              runSpacing: 6.h,
+              alignment: WrapAlignment.center,
+              children: [
+                if (task.pickupDateTime != null) ...[
+                  OutlinedChip(
+                    label: DateFormat("EEE, d MMM").format(task.pickupDateTime!), // 📅 Mon, 18 Sep
+                    color: Colors.blueGrey,
+                    icon: Icons.calendar_today,
+                  ),
+                  OutlinedChip(
+                    label: DateFormat("hh:mm a").format(task.pickupDateTime!), // ⏰ 11:30 AM
+                    color: Colors.blueGrey,
+                    icon: Icons.access_time,
+                  ),
+                ],
+              ],
+            ),
+            SizedBox(height: 8.h,),
+
+            Wrap(
+              spacing: 6.w,
+              runSpacing: 6.h,
+              alignment: WrapAlignment.center,
+              children: [
+                OutlinedChip(
+                  label: _statusLabel(task),
+                  color: statusColor,
+                  icon: Icons.info_outline,
+                ),
+              ],
+            ),
+
+            SizedBox(height: 12.h),
+
+            // Delete button if available
+            if (onDelete != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.red.shade50,
+                    foregroundColor: Colors.red.shade600,
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      side: BorderSide(color: Colors.red.shade200),
+                    ),
+                  ),
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete, size: 16),
+                  label: const Text("Delete"),
+                ),
+              ),
+          ],
         ),
       ),
-    ).asGlass(
-      clipBorderRadius: BorderRadius.circular(20.r),
-      blurX: 12,
-      blurY: 12,
-      frosted: true,
     );
   }
 }
