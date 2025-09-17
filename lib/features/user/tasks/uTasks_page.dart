@@ -45,7 +45,7 @@ class UTasksPage extends StatelessWidget {
                 children: [
                   // Upcoming tasks
                   StreamBuilder(
-                    stream: service.streamUserTasks(),
+                    stream: service.streamUpcomingTasks(),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
                         return const Center(
@@ -86,7 +86,7 @@ class UTasksPage extends StatelessWidget {
 
                   // History (completed)
                   StreamBuilder(
-                    stream: service.streamUserTasks(),
+                    stream: service.streamHistoryTasks(),
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
                         return const Center(

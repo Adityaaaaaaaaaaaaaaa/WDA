@@ -6,39 +6,59 @@ class UTasksUpdateDeleteService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Soft delete (userDeleted flag)
+  /// Soft delete (mark as cancelled)
   Future<void> deleteTaskForUser(String taskId) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");
 
     await _db.collection("tasks").doc(taskId).update({
       "userDeleted": true,
-      "updatedAt": Timestamp.fromDate(DateTime.now()), // ✅ use Timestamp, not string
+      "status": "cancelled",
+      "updatedAt": Timestamp.fromDate(DateTime.now()),
+    });
+
+    await _db
+        .collection("users")
+        .doc(user.uid)
+        .collection("tasks")
+        .doc(taskId)
+        .update({
+      "userDeleted": true,
+      "status": "cancelled",
     });
   }
 
-  /// Update task details
-  Future<void> updateTask(String taskId, Map<String, dynamic> updates) async {
-    final user = _auth.currentUser;
-    if (user == null) throw Exception("User not logged in");
-
-    updates["updatedAt"] = Timestamp.fromDate(DateTime.now()); // ✅ Timestamp
-
-    await _db.collection("tasks").doc(taskId).update(updates);
-  }
-
-  /// Stream user tasks (from global tasks collection)
-  Stream<List<Map<String, dynamic>>> streamUserTasks() {
+  /// Stream for upcoming (active) tasks
+  Stream<List<Map<String, dynamic>>> streamUpcomingTasks() {
     final user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");
 
     return _db
         .collection("tasks")
         .where("userId", isEqualTo: user.uid)
-        .where("userDeleted", isEqualTo: false) // ✅ field exists in global tasks
+        .where("userDeleted", isEqualTo: false) // ✅ only active
         .orderBy("createdAt", descending: true)
         .snapshots()
         .map((snapshot) =>
             snapshot.docs.map((doc) => doc.data()).toList());
+  }
+
+  /// Stream for history (completed + cancelled + deleted)
+  Stream<List<Map<String, dynamic>>> streamHistoryTasks() {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception("User not logged in");
+
+    return _db
+        .collection("tasks")
+        .where("userId", isEqualTo: user.uid)
+        .orderBy("createdAt", descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => doc.data())
+            .where((data) =>
+                data["status"] == "completed" ||
+                data["status"] == "cancelled" ||
+                (data["userDeleted"] == true))
+            .toList());
   }
 }
