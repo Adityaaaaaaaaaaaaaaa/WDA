@@ -15,9 +15,8 @@ class URequestService {
     required DateTime? pickupDateTime,
     required String address,
     required String notes,
-    required int ecoPoints,
+    required int ecoPoints, // full task points
     String source = "user_request",
-    String taskType = "pickup", // new field
   }) async {
     try {
       final user = _auth.currentUser;
@@ -36,7 +35,7 @@ class URequestService {
         "wasteTypes": wasteTypes.toList(),
         "size": size,
         "urgency": urgency,
-        "pickupDateTime": pickupDateTime?.toIso8601String(),
+        "pickupDateTime": pickupDateTime != null ? Timestamp.fromDate(pickupDateTime) : null,
         "address": address,
         "notes": notes,
 
@@ -46,23 +45,22 @@ class URequestService {
         "completionPoints": completionPoints,
         "awardedCompletion": false,
 
-        // driver
         "driverAssigned": false,
         "driverId": null,
         "driverName": null,
         "driverSeen": false,
 
         // lifecycle
-        "createdAt": now.toIso8601String(),
-        "updatedAt": now.toIso8601String(),
+        "createdAt": Timestamp.fromDate(now),
+        "updatedAt": Timestamp.fromDate(now),
         "source": source,
-        "taskType": taskType,
+        "taskType": "pickup",
 
         // qr
         "qrCodeData": "task:$taskId:user:${user.uid}",
         "qrCodeUsed": false,
 
-        // status
+        // status + progress
         "status": "pending",
         "progressStages": {
           "accepted": false,
@@ -83,7 +81,7 @@ class URequestService {
       // save globally
       await _db.collection("tasks").doc(taskId).set(taskData);
 
-      // save inside user's history
+      // save inside user's history (with minimal fields)
       await _db
           .collection("users")
           .doc(user.uid)
@@ -96,8 +94,7 @@ class URequestService {
         "completionPoints": completionPoints,
         "awardedCompletion": false,
         "status": "pending",
-        "createdAt": now.toIso8601String(),
-        "userDeleted": false,
+        "createdAt": Timestamp.fromDate(now),
       });
 
       // immediately add half points to user doc
@@ -127,7 +124,7 @@ class URequestService {
       "awardedCompletion": true,
       "status": "completed",
       "progressStages.completed": true,
-      "updatedAt": DateTime.now().toIso8601String(),
+      "updatedAt": Timestamp.fromDate(DateTime.now()),
     });
 
     // update in user’s history subcollection

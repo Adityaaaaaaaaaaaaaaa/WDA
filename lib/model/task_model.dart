@@ -1,4 +1,6 @@
 // lib/model/task_model.dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class TaskModel {
   final String taskId;
   final String userId;
@@ -79,9 +81,9 @@ class TaskModel {
       wasteTypes: List<String>.from(data['wasteTypes'] ?? []),
       size: data['size'] ?? '',
       urgency: data['urgency'] ?? '',
-      pickupDateTime: data['pickupDateTime'] != null
-          ? DateTime.tryParse(data['pickupDateTime'])
-          : null,
+      // pickupDateTime: data['pickupDateTime'] != null
+      //     ? DateTime.tryParse(data['pickupDateTime'])
+      //     : null,
       address: data['address'] ?? '',
       notes: data['notes'] ?? '',
 
@@ -98,12 +100,17 @@ class TaskModel {
       driverSeen: data['driverSeen'] ?? false,
 
       // lifecycle
-      createdAt: data['createdAt'] != null
-          ? DateTime.tryParse(data['createdAt']) ?? DateTime.now()
+      createdAt: data['createdAt'] is Timestamp
+          ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
-      updatedAt: data['updatedAt'] != null
-          ? DateTime.tryParse(data['updatedAt']) ?? DateTime.now()
+
+      updatedAt: data['updatedAt'] is Timestamp
+          ? (data['updatedAt'] as Timestamp).toDate()
           : DateTime.now(),
+
+      pickupDateTime: data['pickupDateTime'] is Timestamp
+          ? (data['pickupDateTime'] as Timestamp).toDate()
+          : null,
       source: data['source'] ?? "user_request",
       taskType: data['taskType'] ?? "pickup",
 

@@ -13,16 +13,7 @@ class UTasksUpdateDeleteService {
 
     await _db.collection("tasks").doc(taskId).update({
       "userDeleted": true,
-      "updatedAt": DateTime.now().toIso8601String(),
-    });
-
-    await _db
-        .collection("users")
-        .doc(user.uid)
-        .collection("tasks")
-        .doc(taskId)
-        .update({
-      "userDeleted": true,
+      "updatedAt": Timestamp.fromDate(DateTime.now()), // ✅ use Timestamp, not string
     });
   }
 
@@ -31,30 +22,23 @@ class UTasksUpdateDeleteService {
     final user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");
 
-    updates["updatedAt"] = DateTime.now().toIso8601String();
+    updates["updatedAt"] = Timestamp.fromDate(DateTime.now()); // ✅ Timestamp
 
     await _db.collection("tasks").doc(taskId).update(updates);
-
-    await _db
-        .collection("users")
-        .doc(user.uid)
-        .collection("tasks")
-        .doc(taskId)
-        .update(updates);
   }
 
-  /// Stream user tasks (live updates)
+  /// Stream user tasks (from global tasks collection)
   Stream<List<Map<String, dynamic>>> streamUserTasks() {
     final user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");
 
     return _db
-      .collection("users")
-      .doc(user.uid)
-      .collection("tasks")
-      .where("userDeleted", isEqualTo: false)
-      .snapshots()
-      .map((snapshot) => 
-        snapshot.docs.map((doc) => doc.data()).toList());
+        .collection("tasks")
+        .where("userId", isEqualTo: user.uid)
+        .where("userDeleted", isEqualTo: false) // ✅ field exists in global tasks
+        .orderBy("createdAt", descending: true)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => doc.data()).toList());
   }
 }
