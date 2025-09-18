@@ -18,6 +18,7 @@ import 'features/setup/user_role_page.dart';
 import 'features/splash/splash_screen.dart';
 import 'features/user/home/uHome_page.dart';
 import 'features/user/request/uRequest_page.dart';
+import 'features/user/tasks/uTaskDetails_page.dart';
 import 'features/user/tasks/uTasks_page.dart';
 import 'utils/adaptive_transition.dart';
 
@@ -90,6 +91,17 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/uTasks',
       builder: (context, state) => const UTasksPage(),
+    ),
+    GoRoute(
+      path: '/uTaskDetails',
+      builder: (context, state) {
+        final taskId = state.extra as String?;
+        if (taskId == null) {
+          // Optional: show a friendly error page
+          return const Scaffold(body: Center(child: Text('Missing task id')));
+        }
+        return UTaskDetailsPage(taskId: taskId);
+      },
     ),
   ],
 );

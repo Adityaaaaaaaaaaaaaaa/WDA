@@ -1,6 +1,7 @@
 // lib/features/user/tasks/uTasks_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import '../../../model/task_model.dart';
 import '../../../services/uTasks_updateDelete.dart';
 import '../widgets/uAppBar.dart';
@@ -75,9 +76,7 @@ class UTasksPage extends StatelessWidget {
                             task: task,
                             onDelete: () async =>
                                 await service.deleteTaskForUser(task.taskId),
-                            onTap: () {
-                              // TODO: Navigate to detail page
-                            },
+                            onTap: () => context.push('/uTaskDetails', extra: task.taskId),
                           );
                         },
                       );
@@ -115,9 +114,7 @@ class UTasksPage extends StatelessWidget {
                           final task = tasks[index];
                           return TaskCard(
                             task: task,
-                            onTap: () {
-                              // TODO: Navigate to detail page
-                            },
+                            onTap: () => context.push('/uTaskDetails', extra: task.taskId),
                           );
                         },
                       );
