@@ -5,7 +5,7 @@ import '../../../services/uRequest_save.dart';
 import '../widgets/uAppBar.dart';
 import '../widgets/uNavBar.dart';
 import 'widgets/animated_glass_card.dart';
-import 'widgets/waste_type_grid.dart';
+import '../widgets/waste_type_grid.dart';
 import 'widgets/enhanced_inputs.dart';
 
 class URequestPage extends StatefulWidget {

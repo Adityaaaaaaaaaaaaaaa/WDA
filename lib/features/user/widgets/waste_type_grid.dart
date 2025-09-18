@@ -456,12 +456,12 @@ final List<WasteType> _wasteTypes = [
       description: "Unsorted household waste.",
       difficulty: "Easy",
       rarity: "Common"),
-  WasteType("Black Money", Icons.attach_money_rounded, Colors.lightGreen.shade800,
-      points: 10,
-      sass: "Everyday cash 🗑️",
-      description: "Unsorted household waste.",
-      difficulty: "Easy",
-      rarity: "rare"),
+  WasteType("Other", Icons.attach_money_rounded, Colors.lightGreen.shade800,
+      points: 100,
+      sass: "Idk",
+      description: "Unsorted waste. Could be anything",
+      difficulty: "Hell",
+      rarity: "Legendary"),
 ];
 
 /// public exports
