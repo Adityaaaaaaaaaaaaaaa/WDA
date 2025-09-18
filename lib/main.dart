@@ -91,10 +91,6 @@ final GoRouter _router = GoRouter(
       path: '/uTasks',
       builder: (context, state) => const UTasksPage(),
     ),
-    GoRoute(
-      path: '/uTasksDetails',
-      //builder: (context, state) => const ,
-    )
   ],
 );
 

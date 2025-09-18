@@ -54,20 +54,20 @@ class EcoPointsChip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
       decoration: BoxDecoration(
-        color: Colors.green.shade600,
+        color: Colors.lightGreenAccent,
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.eco, size: 14, color: Colors.white),
+          const Icon(Icons.eco, size: 14, color: Colors.orange),
           SizedBox(width: 4.w),
           Text(
             "+$points pts",
             style: TextStyle(
               fontSize: 11.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              color: Colors.black,
             ),
           ),
         ],
