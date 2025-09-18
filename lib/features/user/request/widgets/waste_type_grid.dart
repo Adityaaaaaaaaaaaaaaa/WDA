@@ -1,3 +1,4 @@
+// lib/features/user/request/widgets/waste_type_grid.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:glass/glass.dart';
@@ -5,12 +6,7 @@ import 'package:glass/glass.dart';
 class WasteTypeGrid extends StatefulWidget {
   final Set<String> initialSelected;
   final ValueChanged<Set<String>> onChanged;
-
-  const WasteTypeGrid({
-    super.key,
-    required this.initialSelected,
-    required this.onChanged,
-  });
+  const WasteTypeGrid({super.key, required this.initialSelected, required this.onChanged});
 
   @override
   State<WasteTypeGrid> createState() => _WasteTypeGridState();
@@ -20,13 +16,7 @@ class _WasteTypeGridState extends State<WasteTypeGrid> {
   late final Set<String> _selected = {...widget.initialSelected};
 
   void _toggle(String label) {
-    setState(() {
-      if (_selected.contains(label)) {
-        _selected.remove(label);
-      } else {
-        _selected.add(label);
-      }
-    });
+    setState(() => _selected.contains(label) ? _selected.remove(label) : _selected.add(label));
     widget.onChanged(_selected);
   }
 
@@ -37,64 +27,45 @@ class _WasteTypeGridState extends State<WasteTypeGrid> {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      cacheExtent: MediaQuery.of(context).size.height,
       itemCount: types.length,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         mainAxisSpacing: 10.h,
         crossAxisSpacing: 10.w,
-        childAspectRatio: 2.8,
+        childAspectRatio: 2.9,
       ),
-      itemBuilder: (context, index) {
-        final type = types[index];
-        final isSelected = _selected.contains(type.label);
-
-        return GestureDetector(
-          onTap: () => _toggle(type.label),
-          onLongPress: () => _showDetailDialog(type),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30.r),
-              color: isSelected ? type.color.withOpacity(0.15) : Colors.white,
-              border: Border.all(
-                color: isSelected ? type.color : Colors.grey.shade300,
-                width: isSelected ? 2 : 1,
+      itemBuilder: (context, i) {
+        final t = types[i];
+        final on = _selected.contains(t.label);
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(28.r),
+            onTap: () => _toggle(t.label),
+            onLongPress: () => _showDetailDialog(t),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 7.h),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28.r),
+                color: on ? t.color.withOpacity(.10) : Colors.white,
+                border: Border.all(color: on ? t.color : Colors.grey.shade300, width: on ? 1.6 : 1.1),
+                boxShadow: on ? [BoxShadow(color: t.color.withOpacity(.18), blurRadius: 10, offset: const Offset(0, 4))] : [],
               ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: type.color.withOpacity(0.4),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      )
-                    ]
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(type.icon, color: type.color, size: 16.sp),
-                SizedBox(width: 6.w),
-                Flexible(
-                  child: Text(
-                    type.label,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11.sp,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(t.icon, size: 16.sp, color: t.color),
+                  SizedBox(width: 6.w),
+                  Flexible(
+                    child: Text(
+                      t.label,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w600, color: const Color(0xFF111827)),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -107,16 +78,11 @@ class _WasteTypeGridState extends State<WasteTypeGrid> {
       context: context,
       builder: (context) => Dialog(
         insetPadding: EdgeInsets.all(16.w),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.r),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
         child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
+          builder: (context, c) => SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: constraints.maxWidth,
-                maxHeight: constraints.maxHeight,
-              ),
+              constraints: BoxConstraints(maxWidth: c.maxWidth, maxHeight: c.maxHeight),
               child: Padding(
                 padding: EdgeInsets.all(16.w),
                 child: Column(
@@ -124,57 +90,31 @@ class _WasteTypeGridState extends State<WasteTypeGrid> {
                   children: [
                     Icon(type.icon, color: type.color, size: 40.sp),
                     SizedBox(height: 12.h),
-                    Text(
-                      type.label,
-                      style: TextStyle(
-                        fontSize: 16.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text(type.label, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
                     SizedBox(height: 8.h),
-                    Text(
-                      type.description,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12.sp),
-                    ),
+                    Text(type.description, textAlign: TextAlign.center, style: TextStyle(fontSize: 12.5.sp)),
                     SizedBox(height: 8.h),
-                    Text(
-                      type.sass,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
+                    Text(type.sass, textAlign: TextAlign.center, style: TextStyle(fontSize: 12.sp, fontStyle: FontStyle.italic, color: Colors.grey.shade700)),
                     SizedBox(height: 12.h),
-                    Text("Eco Points: ${type.points}",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green.shade700)),
+                    Text("Eco Points: ${type.points}", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green.shade700)),
                     Text("Difficulty: ${type.difficulty}"),
                     Text("Rarity: ${type.rarity}"),
-                    SizedBox(height: 16.h),
+                    SizedBox(height: 14.h),
                     ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: type.color,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                       ),
-                      child: const Text("Close",
-                          style: TextStyle(color: Colors.white)),
+                      child: const Text("Close", style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
               ),
             ).asGlass(
               clipBorderRadius: BorderRadius.circular(16.r),
-              blurX: 10,
-              blurY: 10,
-              frosted: true,
-              tintColor: type.color.withOpacity(0.6),
+              blurX: 10, blurY: 10, frosted: true,
+              tintColor: type.color.withOpacity(0.55),
             ),
           ),
         ),
@@ -183,6 +123,7 @@ class _WasteTypeGridState extends State<WasteTypeGrid> {
   }
 }
 
+/// ====== Data ======
 class WasteType {
   final String label;
   final IconData icon;
@@ -192,17 +133,7 @@ class WasteType {
   final String description;
   final String difficulty;
   final String rarity;
-
-  const WasteType(
-    this.label,
-    this.icon,
-    this.color, {
-    required this.points,
-    required this.sass,
-    required this.description,
-    required this.difficulty,
-    required this.rarity,
-  });
+  const WasteType(this.label, this.icon, this.color, {required this.points, required this.sass, required this.description, required this.difficulty, required this.rarity});
 }
 
 /// FULL list of waste types

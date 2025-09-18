@@ -3,104 +3,93 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../model/task_model.dart';
 
-/// Maps a task to a status color used across the app (user + driver)
 class StatusChipTheme {
   static Color colorFor(TaskModel t) {
-    if (t.userDeleted || t.status == "cancelled") return const Color(0xFFE74C3C); // red 600-ish
+    if (t.userDeleted || t.status == "cancelled") return const Color(0xFFEF4444);
     switch (t.status) {
-      case "pending":
-        return const Color(0xFFF39C12); // amber-ish
-      case "in_progress":
-        return const Color(0xFF3498DB); // blue
-      case "completed":
-        return const Color(0xFF2ECC71); // green
-      default:
-        return Colors.black54;
+      case "pending":     return const Color(0xFFF59E0B);
+      case "in_progress": return const Color(0xFF3B82F6);
+      case "completed":   return const Color(0xFF10B981);
+      default:            return const Color(0xFF64748B);
     }
   }
 }
 
-/// Minimal outlined chip (border only, tiny font)
+/// Minimal outlined chip with subtle neon border (no 3D fill).
 class OutlinedChip extends StatelessWidget {
   final String label;
   final Color color;
   final IconData? icon;
-
-  const OutlinedChip({
-    super.key,
-    required this.label,
-    required this.color,
-    this.icon,
-  });
+  const OutlinedChip({super.key, required this.label, required this.color, this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
       decoration: BoxDecoration(
-        border: Border.all(color: color, width: 1.2),
-        borderRadius: BorderRadius.circular(16.r),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: color.withOpacity(.35), width: 1.2),
+        boxShadow: [BoxShadow(color: color.withOpacity(.12), blurRadius: 8, offset: const Offset(0, 3))],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 12.sp, color: color),
-            SizedBox(width: 3.w),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        if (icon != null) ...[
+          Icon(icon, size: 12.5.sp, color: color),
+          SizedBox(width: 6.w),
         ],
-      ),
+        Text(label, style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w600, color: color)),
+      ]),
     );
   }
 }
 
-/// Filled eco points chip (keeps visual emphasis)
 class EcoPointsChip extends StatelessWidget {
   final int points;
   const EcoPointsChip({super.key, required this.points});
 
   @override
   Widget build(BuildContext context) {
+    final c = const Color(0xFF10B981);
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F9EE),
-        borderRadius: BorderRadius.circular(16.r),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: c.withOpacity(.35), width: 1.2),
+        boxShadow: [BoxShadow(color: c.withOpacity(.12), blurRadius: 8, offset: const Offset(0, 3))],
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.eco, size: 14, color: Color(0xFF27AE60)),
-          SizedBox(width: 4.w),
-          Text(
-            "+$points Points",
-            style: TextStyle(
-              fontSize: 11.sp,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF145A32),
-            ),
-          ),
-        ],
-      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.eco_rounded, size: 13.5.sp, color: c),
+        SizedBox(width: 6.w),
+        Text("+$points pts", style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w800, color: c)),
+      ]),
     );
   }
 }
 
-/// Status chip (outlined), text only look
 class StatusChip extends StatelessWidget {
   final String text;
   final Color color;
   const StatusChip({super.key, required this.text, required this.color});
 
   @override
-  Widget build(BuildContext context) =>
-      OutlinedChip(label: text, color: color, icon: Icons.info_outline);
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18.r),
+        border: Border.all(color: color.withOpacity(.35), width: 1.2),
+        boxShadow: [BoxShadow(color: color.withOpacity(.12), blurRadius: 8, offset: const Offset(0, 3))],
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 8.w, height: 8.w,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        SizedBox(width: 6.w),
+        Text(text, style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w700, color: color)),
+      ]),
+    );
+  }
 }
