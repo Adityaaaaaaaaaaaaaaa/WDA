@@ -17,6 +17,7 @@ import 'features/setup/userSetup_page.dart';
 import 'features/setup/user_role_page.dart';
 import 'features/splash/splash_screen.dart';
 import 'features/user/home/uHome_page.dart';
+import 'features/user/map/uMaps_page.dart';
 import 'features/user/request/uRequest_page.dart';
 import 'features/user/tasks/uTaskDetails_page.dart';
 import 'features/user/tasks/uTasks_page.dart';
@@ -102,6 +103,10 @@ final GoRouter _router = GoRouter(
         }
         return UTaskDetailsPage(taskId: taskId);
       },
+    ),
+    GoRoute(
+      path: '/uMap',
+      builder: (context, state) => const UMapsPage(),
     ),
   ],
 );
