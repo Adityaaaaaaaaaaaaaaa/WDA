@@ -17,21 +17,6 @@ import 'widgets/umap_widgets.dart'; // UI widgets
 const _mauritius = LatLng(-20.159040837339187, 57.50168322852903);
 const _mauritiusCamera = CameraPosition(target: _mauritius, zoom: 15.0);
 
-// // Clean, minimalist map style with better contrast
-// const _kMinimalMapStyle = '''
-// [
-//   {"featureType":"poi","stylers":[{"visibility":"off"}]},
-//   {"featureType":"transit","stylers":[{"visibility":"off"}]},
-//   {"featureType":"road","elementType":"labels.icon","stylers":[{"visibility":"off"}]},
-//   {"featureType":"administrative.land_parcel","stylers":[{"visibility":"off"}]},
-//   {"featureType":"landscape","stylers":[{"color":"#f8f9fa"}]},
-//   {"featureType":"water","stylers":[{"color":"#e3f2fd"}]},
-//   {"featureType":"road.highway","stylers":[{"color":"#ffffff"}]},
-//   {"featureType":"road.arterial","stylers":[{"color":"#ffffff"}]},
-//   {"featureType":"road.local","stylers":[{"color":"#ffffff"}]}
-// ]
-// ''';
-
 // Clean, minimalist map style with better contrast
 // Enhanced, accessible map style with improved contrast and clarity
 const _kMinimalMapStyle = '''
