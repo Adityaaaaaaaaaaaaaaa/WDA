@@ -11,18 +11,23 @@ import '../widgets/uAppBar.dart';
 import '../widgets/uNavBar.dart';
 import '../widgets/waste_type_grid.dart' show wasteTypes, WasteType;
 
+// ---- Map defaults (Mauritius) ----
+const _mauritius = LatLng(-20.159040837339187, 57.50168322852903); // Port Louis-ish center
+const _mauritiusCamera = CameraPosition(target: _mauritius, zoom: 5.0);
+
+
 class UMapsPage extends StatefulWidget {
   const UMapsPage({super.key});
   @override
   State<UMapsPage> createState() => _UMapsPageState();
 }
 
-class _UMapsPageState extends State<UMapsPage> {
+class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver{
   final _svc = MapSpotsService();
   final _auth = FirebaseAuth.instance;
 
   GoogleMapController? _map;
-  CameraPosition _camera = const CameraPosition(target: LatLng(0, 0), zoom: 3);
+  CameraPosition _camera = _mauritiusCamera; // default to Mauritius
   CameraPosition? _lastCamera;
 
   final _markers = <Marker>{};
@@ -31,29 +36,48 @@ class _UMapsPageState extends State<UMapsPage> {
 
   String? get _uid => _auth.currentUser?.uid;
 
+  // simple UI filters (optional)
+  final Set<String> _activeTypes = {};   // empty = show all
+  bool _uiExpanded = true;               // toggle header collapse
+  bool _passesFilter(String type) => _activeTypes.isEmpty || _activeTypes.contains(type);
+
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _bootstrap();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _sub?.cancel();
     _debounce?.cancel();
     _map?.dispose();
     super.dispose();
   }
 
+  @override
+    void didChangeAppLifecycleState(AppLifecycleState state) {
+    // stop Firestore stream when app backgrounded; resume when foregrounded
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _sub?.cancel();
+      _sub = null;
+    } else if (state == AppLifecycleState.resumed) {
+      _listenAround((_lastCamera ?? _camera).target);
+    }
+  }
+
   Future<void> _bootstrap() async {
-    await _ensureLocPerms();
-    final pos = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.best,
-    );
-    _camera = CameraPosition(
-      target: LatLng(pos.latitude, pos.longitude),
-      zoom: 14,
-    );
+    try {
+      await _ensureLocPerms();
+      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+      _camera = CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 14);
+    } catch (_) {
+      // keep Mauritius defaults
+      _camera = _mauritiusCamera;
+    }
     if (mounted) setState(() {});
     _listenAround(_camera.target);
   }
@@ -73,6 +97,7 @@ class _UMapsPageState extends State<UMapsPage> {
         .listen((spots) {
       final ms = <Marker>{};
       for (final s in spots) {
+        if (!_passesFilter(s.type)) continue;
         final hue = _hueFromType(s.type);
         ms.add(
           Marker(
@@ -158,6 +183,7 @@ class _UMapsPageState extends State<UMapsPage> {
       bottomNavigationBar: const UNavBar(currentIndex: 1),
       body: Stack(
         children: [
+          // MAP
           GoogleMap(
             compassEnabled: true,
             myLocationEnabled: true,
@@ -166,17 +192,88 @@ class _UMapsPageState extends State<UMapsPage> {
             mapToolbarEnabled: false,
             trafficEnabled: false,
             initialCameraPosition: _camera,
-            onMapCreated: (c) => _map = c,
+            onMapCreated: (c) {
+              _map = c;
+              _map?.moveCamera(CameraUpdate.newCameraPosition(_camera));
+            },
             markers: _markers,
             onLongPress: _addSpotAt,
             onCameraMove: (pos) => _lastCamera = pos,
             onCameraIdle: () => _debouncedRefresh(_lastCamera ?? _camera),
           ),
 
-          // Floating controls
+          // TOP frosted header
           Positioned(
-            right: 16,
-            bottom: 24 + 56 + 12,
+            left: 12, right: 12, top: 12 + MediaQuery.of(context).padding.top,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.92),
+                borderRadius: BorderRadius.circular(16.r),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(.08), blurRadius: 12, offset: const Offset(0,6))],
+                border: Border.all(color: Colors.grey.shade300, width: 1.1),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // title row
+                  Row(
+                    children: [
+                      const Icon(Icons.map, color: Colors.green),
+                      SizedBox(width: 8.w),
+                      const Expanded(
+                        child: Text("The Trash Map", style: TextStyle(fontWeight: FontWeight.w800)),
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => setState(() => _uiExpanded = !_uiExpanded),
+                        icon: Icon(_uiExpanded ? Icons.expand_less : Icons.expand_more),
+                      ),
+                    ],
+                  ),
+
+                  // filter row
+                  if (_uiExpanded) ...[
+                    SizedBox(height: 6.h),
+                    SizedBox(
+                      height: 36.h,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 10, // show first 10 types as quick filters; still supports all via sheet
+                        separatorBuilder: (_, __) => SizedBox(width: 6.w),
+                        itemBuilder: (_, i) {
+                          final t = wasteTypes[i];
+                          final on = _activeTypes.contains(t.label);
+                          return FilterChip(
+                            label: Text(t.label, overflow: TextOverflow.ellipsis),
+                            visualDensity: VisualDensity.compact,
+                            selected: on,
+                            side: BorderSide(color: on ? t.color : Colors.grey.shade300),
+                            selectedColor: t.color.withOpacity(.12),
+                            onSelected: (v) {
+                              setState(() {
+                                if (v) {
+                                  _activeTypes.add(t.label);
+                                } else {
+                                  _activeTypes.remove(t.label);
+                                }
+                              });
+                              _listenAround((_lastCamera ?? _camera).target);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+
+          // FLOATS (locate)
+          Positioned(
+            right: 16, bottom: 24 + 56 + 12,
             child: Column(
               children: [
                 FloatingActionButton.small(
@@ -185,6 +282,35 @@ class _UMapsPageState extends State<UMapsPage> {
                   child: const Icon(Icons.my_location),
                 ),
               ],
+            ),
+          ),
+
+          // BOTTOM hint card
+          Positioned(
+            left: 16, right: 16, bottom: 24 + 56 + 12 + 56,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14.r),
+                border: Border.all(color: Colors.grey.shade300, width: 1.1),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(.06), blurRadius: 10, offset: const Offset(0,5))],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.touch_app_outlined, color: Colors.green),
+                  SizedBox(width: 8.w),
+                  const Expanded(
+                    child: Text("Long-press anywhere on the map to pin a trash spot.",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => _addSpotAt((_lastCamera ?? _camera).target),
+                    child: const Text("Pin here"),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
