@@ -456,7 +456,7 @@ final List<WasteType> _wasteTypes = [
       description: "Unsorted household waste.",
       difficulty: "Easy",
       rarity: "Common"),
-  WasteType("Other", Icons.auto_awesome, Colors.yellowAccent,
+  WasteType("Other", Icons.auto_awesome, Colors.purpleAccent,
       points: 100,
       sass: "Idk",
       description: "Unsorted waste. Could be anything",
