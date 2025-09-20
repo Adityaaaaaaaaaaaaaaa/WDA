@@ -926,14 +926,15 @@ class _WasteTypeSelectorPill extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(type.icon, size: 16.sp, color: isSelected ? Colors.white : AppColors.secondary),
-              SizedBox(width: 8.w),
+              Icon(type.icon, size: 15.sp, color: isSelected ? Colors.white : AppColors.secondary),
+              SizedBox(width: 5.w),
               Text(
                 type.label,
                 style: TextStyle(
-                  fontSize: 12.sp,
+                  fontSize: 10.sp,
                   fontWeight: FontWeight.w600,
                   color: isSelected ? Colors.white : AppColors.secondary,
+                  overflow: TextOverflow.ellipsis
                 ),
               ),
             ],
