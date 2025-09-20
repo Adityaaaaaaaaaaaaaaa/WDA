@@ -438,7 +438,7 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
                           mapToolbarEnabled: false,
                           trafficEnabled: true,
                           rotateGesturesEnabled: true,
-                          mapType: MapType.normal,
+                          mapType: MapType.hybrid,
                           scrollGesturesEnabled: true,
                           zoomControlsEnabled: true,
                           zoomGesturesEnabled: true,

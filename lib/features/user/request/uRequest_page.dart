@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../services/uRequest_save.dart';
 import '../widgets/uAppBar.dart';
 import '../widgets/uNavBar.dart';
@@ -28,17 +29,21 @@ class _URequestPageState extends State<URequestPage>
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
 
+  // Optional coordinates (from picker)
+  // ignore: unused_field
+  LatLng? _addressLatLng;
+
   // Animations
   late AnimationController _animController;
 
   final Map<String, Map<String, dynamic>> _sizeDetails = {
-    "Tiny (1-2 items)": { "multiplier": 1.0, },
-    "Small (3-5 items)": { "multiplier": 1.5, },
-    "Medium (6-10 items)": { "multiplier": 2.0, },
-    "Large (11-20 items)": { "multiplier": 3.0, },
-    "XL (20+ items)": { "multiplier": 5.0, },
-    "Mountain (50+ items)": { "multiplier": 8.0, },
-    "A lot": { "multiplier": 10.0, },
+    "Tiny (1-2 items)": {"multiplier": 1.0},
+    "Small (3-5 items)": {"multiplier": 1.5},
+    "Medium (6-10 items)": {"multiplier": 2.0},
+    "Large (11-20 items)": {"multiplier": 3.0},
+    "XL (20+ items)": {"multiplier": 5.0},
+    "Mountain (50+ items)": {"multiplier": 8.0},
+    "A lot": {"multiplier": 10.0},
   };
 
   final List<String> _urgencyOptions = [
@@ -152,16 +157,17 @@ class _URequestPageState extends State<URequestPage>
                 ),
                 SizedBox(height: 20.h),
 
-                // Address
+                // Address (with map picker)
                 AnimatedGlassCard(
                   animation: _animController,
                   title: "Location 📍",
                   subtitle: "Where should we pick it up?",
-                  child: EnhancedTextField(
+                  child: AddressPickerField(
                     controller: _addressController,
                     label: "Pickup Location",
                     icon: Icons.location_on,
-                    hintText: "123 Trash Lane, Garbage City",
+                    hintText: "Search or pick on map",
+                    onPicked: (latLng) => _addressLatLng = latLng,
                   ),
                 ),
                 SizedBox(height: 16.h),
@@ -189,7 +195,8 @@ class _URequestPageState extends State<URequestPage>
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green.shade700,
-                    padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
+                    padding:
+                        EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20.r),
                     ),
@@ -199,8 +206,7 @@ class _URequestPageState extends State<URequestPage>
                     if (_formKey.currentState!.validate() &&
                         _wasteTypes.isNotEmpty &&
                         _size != null &&
-                        _addressController.text.trim().isNotEmpty
-                    ) {
+                        _addressController.text.trim().isNotEmpty) {
                       try {
                         final service = URequestService();
 
@@ -218,22 +224,24 @@ class _URequestPageState extends State<URequestPage>
                         final taskId = await service.createTask(
                           wasteTypes: _wasteTypes,
                           size: _size!,
-                          urgency: _urgency ?? _urgencyOptions[4], // fallback to "Whenever"
+                          urgency: _urgency ?? _urgencyOptions[4],
                           pickupDateTime: pickupDateTime,
                           address: _addressController.text.trim(),
                           notes: _notesController.text.trim(),
                           ecoPoints: ecoPoints,
+                          latitude: _addressLatLng?.latitude,
+                          longitude: _addressLatLng?.longitude,
                         );
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             backgroundColor: Colors.green.shade700,
-                            content: Text("Booking confirmed ✅ Task saved with ID: $taskId"),
+                            content: Text(
+                                "Booking confirmed ✅ Task saved with ID: $taskId"),
                           ),
                         );
 
                         context.push('/uHome');
-
                       } catch (e) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -246,28 +254,32 @@ class _URequestPageState extends State<URequestPage>
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           backgroundColor: Colors.red.shade600,
-                          content: const Text("Please select waste type and size 🗑️"),
+                          content: const Text(
+                              "Please select waste type and size 🗑️"),
                         ),
                       );
                     } else if (_addressController.text.trim().isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           backgroundColor: Colors.red.shade600,
-                          content: const Text("Please enter a pickup location 📍"),
+                          content:
+                              const Text("Please enter a pickup location 📍"),
                         ),
                       );
                     } else if (_size == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           backgroundColor: Colors.red.shade600,
-                          content: const Text("Please select the size of your waste 📏"),
+                          content: const Text(
+                              "Please select the size of your waste 📏"),
                         ),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           backgroundColor: Colors.red.shade600,
-                          content: const Text("Please complete all fields 📝"),
+                          content:
+                              const Text("Please complete all fields 📝"),
                         ),
                       );
                     }

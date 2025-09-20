@@ -17,6 +17,8 @@ class URequestService {
     required String notes,
     required int ecoPoints, // full task points
     String source = "user_request",
+    double? latitude,
+    double? longitude,
   }) async {
     try {
       final user = _auth.currentUser;
@@ -37,6 +39,11 @@ class URequestService {
         "urgency": urgency,
         "pickupDateTime": pickupDateTime != null ? Timestamp.fromDate(pickupDateTime) : null,
         "address": address,
+        "location": (latitude != null && longitude != null)
+            ? {"lat": latitude, "lng": longitude}
+            : null,
+        "lat": latitude,
+        "lng": longitude,
         "notes": notes,
 
         // points system
