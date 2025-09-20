@@ -1,78 +1,27 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
+import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
 
 import '../../../model/map_spot.dart';
 import '../../../services/map_spots_service.dart';
 import '../widgets/uAppBar.dart';
 import '../widgets/uNavBar.dart';
 import '../widgets/waste_type_grid.dart' show wasteTypes;
-import 'widgets/umap_widgets.dart'; // UI widgets
+import 'widgets/umap_widgets.dart';
 
-// ---- Map defaults (Mauritius) ----
 const _mauritius = LatLng(-20.159040837339187, 57.50168322852903);
-const _mauritiusCamera = CameraPosition(target: _mauritius, zoom: 15.0);
-
-// Clean, minimalist map style with better contrast
-// Enhanced, accessible map style with improved contrast and clarity
-const _kMinimalMapStyle = '''
-[
-  /* Global label legibility */
-  {"featureType":"all","elementType":"labels.text.stroke","stylers":[{"color":"#F2F2F2"}]},
-  {"featureType":"administrative","elementType":"labels.text.fill","stylers":[{"color":"#374151"}]},
-  {"featureType":"road","elementType":"labels.text.fill","stylers":[{"color":"#4B5563"}]},
-  {"featureType":"road.arterial","elementType":"labels.text.fill","stylers":[{"color":"#4B5563"}]},
-  {"featureType":"road.local","elementType":"labels.text.fill","stylers":[{"color":"#616161"}]},
-  {"featureType":"water","elementType":"labels.text.fill","stylers":[{"color":"#2A5D7C"}]},
-  {"featureType":"water","elementType":"labels.text.stroke","stylers":[{"color":"#CFE0E6"}]},
-
-  /* Admin clutter off */
-  {"featureType":"administrative.land_parcel","stylers":[{"visibility":"off"}]},
-  {"featureType":"administrative.neighborhood","stylers":[{"visibility":"off"}]},
-
-  /* Darker, neutral land (helps contrast roads/parks/buildings) */
-  {"featureType":"landscape","elementType":"geometry.fill","stylers":[{"color":"#D6D0C7"}]},
-  {"featureType":"landscape.natural","stylers":[{"color":"#D2CCC2"}]},
-  /* Man-made (buildings) a touch darker + stroke so 3D stands out with tilt */
-  {"featureType":"landscape.man_made","elementType":"geometry.fill","stylers":[{"color":"#C8C3BA"}]},
-  {"featureType":"landscape.man_made","elementType":"geometry.stroke","stylers":[{"color":"#B6B1A8"}]},
-
-  /* POIs mostly off, but keep parks */
-  {"featureType":"poi","stylers":[{"visibility":"off"}]},
-  {"featureType":"poi.park","stylers":[{"visibility":"on"},{"color":"#A8D5B8"}]},
-  {"featureType":"poi.park","elementType":"labels.text.fill","stylers":[{"color":"#2E7D32"}]},
-
-  /* Water: soft, desaturated teal — easy on eyes */
-  {"featureType":"water","elementType":"geometry.fill","stylers":[{"color":"#C7DCE3"}]},
-
-  /* Roads: clear hierarchy, subtle strokes so they pop on darker land */
-  {"featureType":"road","elementType":"geometry.fill","stylers":[{"color":"#FFFFFF"}]},
-  {"featureType":"road","elementType":"geometry.stroke","stylers":[{"color":"#D4D1CA"}]},
-
-  {"featureType":"road.local","elementType":"labels.icon","stylers":[{"visibility":"off"}]},
-
-  {"featureType":"road.arterial","elementType":"geometry.fill","stylers":[{"color":"#F8F7F5"}]},
-  {"featureType":"road.arterial","elementType":"geometry.stroke","stylers":[{"color":"#CFCBC3"}]},
-  {"featureType":"road.arterial","elementType":"labels.text.fill","stylers":[{"color":"#505A64"}]},
-
-  {"featureType":"road.highway","elementType":"geometry.fill","stylers":[{"color":"#EAE9E6"}]},
-  {"featureType":"road.highway","elementType":"geometry.stroke","stylers":[{"color":"#C4C1BA"}]},
-  {"featureType":"road.highway","elementType":"labels.text.fill","stylers":[{"color":"#39434D"}]},
-
-  /* Transit clutter off */
-  {"featureType":"transit","stylers":[{"visibility":"off"}]}
-
-  /* Mountains */
-  {"featureType":"landscape.natural.terrain","elementType":"geometry.fill","stylers":[{"color":"#B5B0A5"}]},
-  {"featureType":"landscape.natural.terrain","elementType":"geometry.stroke","stylers":[{"color":"#A39D93"}]},
-  {"featureType":"landscape.natural.landcover","elementType":"geometry.fill","stylers":[{"color":"#B9C8B2"}]},
-  {"featureType":"landscape.natural","elementType":"labels.text.fill","stylers":[{"color":"#3F3D38"}]}
-]
-''';
+final _muBounds = LatLngBounds(LatLng(-20.8, 57.20), LatLng(-19.8, 57.90));
 
 class UMapsPage extends StatefulWidget {
   const UMapsPage({super.key});
@@ -84,42 +33,41 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
   final _svc = MapSpotsService();
   final _auth = FirebaseAuth.instance;
 
-  GoogleMapController? _map;
-  CameraPosition _camera = _mauritiusCamera;
-  CameraPosition? _lastCamera;
+  final _map = MapController();
+  //CameraFit? _initialFit;
 
-  final _markers = <Marker>{};
+  LatLng _initialCenter = _mauritius;
+  double _initialZoom = 15;
+
+  final _markers = <Marker>[];
+  //final _clusterController = MarkerClusterController();
+
   StreamSubscription<List<MapSpot>>? _sub;
   Timer? _debounce;
 
-  // perf helpers
-  final Map<String, BitmapDescriptor> _typeIconCache = {};
-  LatLng? _lastQueryCenter;
-  double _bearing = 0.0;
+  LatLng _cameraCenter = _mauritius;
+  double _zoom = 15;
+  double _bearingRad = 0;
 
   // UI state
   bool _showHint = true;
   Timer? _hintTimer;
-  final bool _minimalStyle = true; // single style
   bool _onlyMine = false;
+  final Set<String> _activeTypes = {};
+  bool _uiExpanded = false;
 
-  // Location status chip
+  // location perm chip
   bool _needsLocationPermission = false;
-
   String? get _uid => _auth.currentUser?.uid;
 
-  // Mauritius bounds to keep tiles light
-  static final _muBounds = LatLngBounds(
-    southwest: const LatLng(-20.8, 57.20),
-    northeast: const LatLng(-19.8, 57.90),
-  );
+  // performance helpers
+  LatLng? _lastQueryCenter;
 
-  // filters
-  final Set<String> _activeTypes = {}; // empty = show all
-  bool _uiExpanded = false; // Start collapsed for cleaner look
+  // Was: activeTypes.contains(s.type)
+  // Now: a spot passes if ANY of its types match the filter
   bool _passesFilter(MapSpot s) =>
-      (_activeTypes.isEmpty || _activeTypes.contains(s.type)) &&
-      (!_onlyMine || s.createdBy == _uid);
+    (_activeTypes.isEmpty || s.types.any(_activeTypes.contains)) &&
+    (!_onlyMine || s.createdBy == _uid);
 
   @override
   void initState() {
@@ -132,30 +80,23 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
   }
 
   @override
-  void deactivate() {
-    _sub?.cancel();
-    _sub = null;
-    super.deactivate();
-  }
-
-  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _sub?.cancel();
     _debounce?.cancel();
     _hintTimer?.cancel();
-    _map?.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) async {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+    if (state == AppLifecycleState.resumed) {
+      await _refreshLocationPermissionState();
+      _listenAround(_cameraCenter);
+    } else if (state == AppLifecycleState.inactive ||
+               state == AppLifecycleState.paused) {
       _sub?.cancel();
       _sub = null;
-    } else if (state == AppLifecycleState.resumed) {
-      await _refreshLocationPermissionState();
-      _listenAround((_lastCamera ?? _camera).target);
     }
   }
 
@@ -163,17 +104,17 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
     await _refreshLocationPermissionState();
     final pos = await _getBestPositionOrNull();
     if (pos != null) {
-      _camera = CameraPosition(target: LatLng(pos.latitude, pos.longitude), zoom: 14);
-      // ignore: avoid_print
-      print('\x1B[34m[map] bootstrapped at GPS/lastKnown: ${pos.latitude}, ${pos.longitude}\x1B[0m');
+      _cameraCenter = LatLng(pos.latitude, pos.longitude);
+      _zoom = 14;
     } else {
-      _camera = _mauritiusCamera;
-      // ignore: avoid_print
-      print('\x1B[34m[map] GPS unavailable, defaulting to Mauritius\x1B[0m');
+      _cameraCenter = _mauritius;
+      _zoom = 15;
     }
+    _initialCenter = _cameraCenter;
+    _initialZoom  = _zoom;
     if (!mounted) return;
     setState(() {});
-    _listenAround(_camera.target);
+    _listenAround(_cameraCenter);
   }
 
   Future<void> _refreshLocationPermissionState() async {
@@ -182,12 +123,32 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
       final services = await Geolocator.isLocationServiceEnabled();
       var p = await Geolocator.checkPermission();
       needs = !services || p == LocationPermission.denied || p == LocationPermission.deniedForever;
-    } catch (_) {
-      needs = true;
-    }
+    } catch (_) { needs = true; }
     if (mounted && _needsLocationPermission != needs) {
       setState(() => _needsLocationPermission = needs);
     }
+  }
+
+  Future<void> _goToMyLocation() async {
+    try {
+      if (!await Geolocator.isLocationServiceEnabled()) {
+        await Geolocator.openLocationSettings();
+        return;
+      }
+      var p = await Geolocator.checkPermission();
+      if (p == LocationPermission.denied) {
+        p = await Geolocator.requestPermission();
+        if (p == LocationPermission.denied) return;
+      }
+      if (p == LocationPermission.deniedForever) {
+        await Geolocator.openAppSettings();
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+      final target = LatLng(pos.latitude, pos.longitude);
+      _map.move(target, 16);
+      _listenAround(target);
+    } catch (_) {}
   }
 
   Future<Position?> _getBestPositionOrNull() async {
@@ -211,18 +172,7 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
     }
   }
 
-  // distance in meters
-  static double _distMeters(LatLng a, LatLng b) {
-    const r = 6371000.0;
-    final dLat = (b.latitude - a.latitude) * (math.pi / 180);
-    final dLon = (b.longitude - a.longitude) * (math.pi / 180);
-    final la1 = a.latitude * (math.pi / 180);
-    final la2 = b.latitude * (math.pi / 180);
-    final h = math.sin(dLat/2)*math.sin(dLat/2) + math.sin(dLon/2)*math.sin(dLon/2)*math.cos(la1)*math.cos(la2);
-    return 2 * r * math.asin(math.sqrt(h));
-  }
-
-  // radius (km) from zoom (simple heuristic)
+  // --- listen around center & cluster markers ---
   static double _radiusKmForZoom(double zoom) {
     if (zoom >= 17) return 1.2;
     if (zoom >= 15) return 3.5;
@@ -235,54 +185,55 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
   void _listenAround(LatLng center) {
     _sub?.cancel();
     _lastQueryCenter = center;
-    final radiusKm = _radiusKmForZoom((_lastCamera ?? _camera).zoom);
-    // ignore: avoid_print
-    print('\x1B[34m[map] listenAround @ ${center.latitude}, ${center.longitude} r=${radiusKm}km\x1B[0m');
-
+    final radiusKm = _radiusKmForZoom(_zoom);
     _sub = _svc
         .spotsAround(lat: center.latitude, lng: center.longitude, radiusKm: radiusKm)
         .listen((spots) {
-      final next = <Marker>{};
+      if (!mounted) return;
+      final ms = <Marker>[];
       for (final s in spots) {
         if (!_passesFilter(s)) continue;
-        next.add(
+        final primaryLabel = (s.types.isNotEmpty ? s.types.first : wasteTypes.first.label);
+        final color = wasteTypes
+            .firstWhere((w) => w.label == primaryLabel, orElse: () => wasteTypes.first)
+            .color;
+
+        ms.add(
           Marker(
-            markerId: MarkerId(s.id),
-            position: LatLng(s.lat, s.lng),
-            icon: _iconForType(s.type),
-            onTap: () => _showSpotSheet(s),
+            point: LatLng(s.lat, s.lng),
+            width: 36,
+            height: 36,
+            child: GestureDetector(
+              onTap: () => _showSpotSheet(s),
+              child: _Pin(color: color),
+            ),
           ),
         );
       }
-      if (!mounted) return;
       setState(() {
-        if (next.length != _markers.length || !_markers.containsAll(next)) {
-          _markers
-            ..clear()
-            ..addAll(next);
-        }
+        _markers
+          ..clear()
+          ..addAll(ms);
       });
     });
   }
 
-  BitmapDescriptor _iconForType(String type) {
-    final cached = _typeIconCache[type];
-    if (cached != null) return cached;
-    final wt = wasteTypes.firstWhere((w) => w.label == type, orElse: () => wasteTypes.first);
-    final hue = HSLColor.fromColor(wt.color).hue % 360;
-    final icon = BitmapDescriptor.defaultMarkerWithHue(hue);
-    _typeIconCache[type] = icon;
-    return icon;
-  }
-
-  void _debouncedRefresh(CameraPosition cam) {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 250), () {
-      final center = cam.target;
-      if (_lastQueryCenter == null || _distMeters(_lastQueryCenter!, center) > 300) {
-        _listenAround(center);
-      }
-    });
+  void _onMapEvent(MapEvent e) {
+    if (e is MapEventRotate) {
+      _bearingRad = _map.camera.rotationRad;
+    }
+    if (e is MapEventMoveEnd || e is MapEventFlingAnimationEnd) {
+      _cameraCenter = _map.camera.center;
+      _zoom = _map.camera.zoom;
+      _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 250), () {
+        if (_lastQueryCenter == null ||
+            const Distance().as(
+              LengthUnit.Meter, _lastQueryCenter!, _cameraCenter) > 300) {
+          _listenAround(_cameraCenter);
+        }
+      });
+    }
   }
 
   Future<void> _promptForLocationPermission() async {
@@ -292,22 +243,20 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
       backgroundColor: Colors.transparent,
       builder: (_) => LocationPermissionSheet(
         onRequestAgain: () async {
-          Navigator.of(context).pop();
+          Navigator.pop(context);
           final p = await Geolocator.requestPermission();
           await _refreshLocationPermissionState();
           if (p == LocationPermission.whileInUse || p == LocationPermission.always) {
             final pos = await _getBestPositionOrNull();
             if (pos != null) {
               final target = LatLng(pos.latitude, pos.longitude);
-              await _map?.animateCamera(
-                CameraUpdate.newCameraPosition(CameraPosition(target: target, zoom: 15)),
-              );
+              _map.move(target, 15);
               _listenAround(target);
             }
           }
         },
         onOpenSettings: () async {
-          Navigator.of(context).pop();
+          Navigator.pop(context);
           await Geolocator.openAppSettings();
           await _refreshLocationPermissionState();
         },
@@ -315,13 +264,12 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
     );
   }
 
-  void _hideHint() {
-    if (_showHint) setState(() => _showHint = false);
-  }
+  void _hideHint() { if (_showHint) setState(() => _showHint = false); }
 
   Future<void> _addSpotAtCenter() async {
     _hideHint();
-    final at = (_lastCamera ?? _camera).target;
+    final at = _map.camera.center;
+
     final res = await showModalBottomSheet<NewSpot>(
       context: context,
       isScrollControlled: true,
@@ -329,25 +277,46 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
       builder: (_) => const NewSpotPicker(),
     );
     if (res == null) return;
+
+    final address = await _reverseGeocode(at);
+
     await _svc.createSpot(
       lat: at.latitude,
       lng: at.longitude,
-      type: res.type.label,
+      types: res.types.map((t) => t.label).toList(),
+      address: address,
       description: res.note,
-      createdByName: res.displayName?.trim().isEmpty == true ? null : res.displayName,
+      createdByName: res.displayName,
+      approxQty: res.approxQty,
+      accessNotes: res.accessNotes,
     );
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Waste spot added successfully'),
-          duration: const Duration(milliseconds: 1200),
-          backgroundColor: Colors.green.shade600,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-        ),
-      );
-    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Waste spot added'),
+        duration: const Duration(milliseconds: 1200),
+        backgroundColor: Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+      ),
+    );
   }
+
+  Future<String> _reverseGeocode(LatLng ll) async {
+    try {
+      final url =
+          'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${ll.latitude}&lon=${ll.longitude}&zoom=18&addressdetails=1';
+      final res = await http.get(Uri.parse(url), headers: {
+        'User-Agent': 'wda-app/1.0 (+https://example.com)'
+      }).timeout(const Duration(seconds: 7));
+      if (res.statusCode == 200) {
+        final m = jsonDecode(res.body) as Map<String, dynamic>;
+        return (m['display_name'] as String?) ?? '';
+      }
+    } catch (_) {}
+    return '${ll.latitude.toStringAsFixed(5)}, ${ll.longitude.toStringAsFixed(5)}';
+    }
 
   Future<void> _showSpotSheet(MapSpot s) async {
     _hideHint();
@@ -376,7 +345,6 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
         bottom: true,
         child: Column(
           children: [
-            // Compact filter bar (no map-style toggle)
             Padding(
               padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 0),
               child: MapHeaderBar(
@@ -388,7 +356,7 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
                   setState(() {
                     selected ? _activeTypes.add(label) : _activeTypes.remove(label);
                   });
-                  _listenAround((_lastCamera ?? _camera).target);
+                  _listenAround(_cameraCenter);
                 },
                 onOpenAllFilters: () async {
                   final next = await showModalBottomSheet<Set<String>>(
@@ -399,19 +367,18 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
                   );
                   if (next != null) {
                     setState(() => _activeTypes..clear()..addAll(next));
-                    _listenAround((_lastCamera ?? _camera).target);
+                    _listenAround(_cameraCenter);
                   }
                 },
                 onToggleOnlyMine: () {
                   setState(() => _onlyMine = !_onlyMine);
-                  _listenAround((_lastCamera ?? _camera).target);
+                  _listenAround(_cameraCenter);
                 },
               ),
             ),
-
             SizedBox(height: 8.h),
 
-            // Map with improved layout
+            // Map
             Expanded(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16.w, 0, 16.w, 16.h),
@@ -430,61 +397,59 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
                     borderRadius: BorderRadius.circular(20.r),
                     child: Stack(
                       children: [
-                        GoogleMap(
-                          compassEnabled: false,
-                          myLocationEnabled: true,
-                          myLocationButtonEnabled: true,
-                          buildingsEnabled: true,
-                          mapToolbarEnabled: false,
-                          trafficEnabled: true,
-                          rotateGesturesEnabled: true,
-                          mapType: MapType.hybrid,
-                          scrollGesturesEnabled: true,
-                          zoomControlsEnabled: true,
-                          zoomGesturesEnabled: true,
-                          liteModeEnabled: false,
-                          tiltGesturesEnabled: true,
-                          fortyFiveDegreeImageryEnabled: true,
-                          layoutDirection: TextDirection.ltr,
-                          indoorViewEnabled: false,
-                          initialCameraPosition: _camera,
-                          cameraTargetBounds: CameraTargetBounds(_muBounds),
-                          // Padding so Google zoom & locate buttons (right-bottom) are clear of our controls (left-bottom)
-                          padding: EdgeInsets.only(
-                            top: 250.h,
-                            bottom: 10.h,
-                            left: 10.w,
-                            right: 10.w,
+                        FlutterMap(
+                          mapController: _map,
+                          options: MapOptions(
+                            initialCenter: _initialCenter,
+                            initialZoom: _initialZoom,
+                            onMapEvent: _onMapEvent,
+                            cameraConstraint: CameraConstraint.contain(bounds: _muBounds),
+                            interactionOptions: const InteractionOptions(flags: InteractiveFlag.all),
                           ),
-                          minMaxZoomPreference: const MinMaxZoomPreference(3, 19),
-                          onMapCreated: (c) async {
-                            _map = c;
-                            _map?.moveCamera(CameraUpdate.newCameraPosition(_camera));
-                            if (_minimalStyle) {
-                              try { await _map?.setMapStyle(_kMinimalMapStyle); } catch (_) {}
-                            }
-                            // If we lack permission at entry, prompt with your modal
-                            if (_needsLocationPermission) {
-                              // slight delay to allow map to render first frame
-                              Future.delayed(const Duration(milliseconds: 150), _promptForLocationPermission);
-                            }
-                          },
-                          markers: _markers,
-                          onCameraMove: (pos) {
-                            _lastCamera = pos;
-                            _bearing = pos.bearing;
-                          },
-                          onCameraIdle: () => _debouncedRefresh(_lastCamera ?? _camera),
+                          children: [
+                            TileLayer(
+                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'com.example.wda',
+                              maxNativeZoom: 19,
+                              retinaMode: true,
+                            ),
+
+                            // Blue dot (+ accuracy)
+                            const CurrentLocationLayer(
+                              style: LocationMarkerStyle(
+                                marker: DefaultLocationMarker(
+                                  color: Color(0xFF1976D2),
+                                  child: Icon(Icons.my_location, size: 12, color: Colors.white),
+                                ),
+                                markerSize: Size(22, 22),
+                                accuracyCircleColor: Color(0x331976D2),
+                              ),
+                            ),
+
+                            // Clusters
+                            MarkerClusterLayerWidget(
+                              options: MarkerClusterLayerOptions(
+                                maxClusterRadius: 45,
+                                size: const Size(44, 44),
+                                markers: _markers,
+                                rotate: true,
+                                builder: (context, markers) => _ClusterBubble(count: markers.length),
+                              ),
+                            ),
+
+                            // Attribution
+                            RichAttributionWidget(
+                              attributions: [
+                                TextSourceAttribution('OpenStreetMap contributors'),
+                              ],
+                            ),
+                          ],
                         ),
 
-                        // Static crosshair
-                        const Center(
-                          child: IgnorePointer(
-                            child: CrosshairOverlay(),
-                          ),
-                        ),
+                        // Crosshair
+                        const Center(child: IgnorePointer(child: CrosshairOverlay())),
 
-                        // Permission chip if needed (non-blocking)
+                        // Permission chip if needed
                         if (_needsLocationPermission)
                           Positioned(
                             right: 16.w,
@@ -497,13 +462,7 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(16.r),
                                   border: Border.all(color: const Color(0xFFE2E8F0)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.06),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
+                                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 4))],
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -517,49 +476,37 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
                             ),
                           ),
 
-                        // Floating action buttons (LEFT bottom -> no overlap with zoom controls)
+                        // Left FAB column
                         Positioned(
-                          left: 16.w,
-                          bottom: 50.h,
+                          left: 10.w,
+                          bottom: 10.h,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Better compass
+                              // Compass reset
                               CompassButton(
-                                bearing: _bearing,
-                                onReset: () async {
+                                bearing: _bearingRad * 180 / math.pi,
+                                onReset: () {
                                   _hideHint();
-                                  final target = (_lastCamera ?? _camera).target;
-                                  await _map?.animateCamera(
-                                    CameraUpdate.newCameraPosition(
-                                      CameraPosition(
-                                        target: target,
-                                        zoom: (_lastCamera ?? _camera).zoom,
-                                        bearing: 0, tilt: 0,
-                                      ),
-                                    ),
-                                  );
+                                  _map.rotate(0);
                                 },
                               ),
                               SizedBox(height: 12.h),
-                              // Better primary pin button
                               CenterPinButton(onPressed: _addSpotAtCenter),
                               SizedBox(height: 12.h),
-                              // Better Home (Mauritius) button
                               MauritiusButton(
-                                onPressed: () async {
+                                onPressed: () {
                                   _hideHint();
-                                  await _map?.animateCamera(
-                                    CameraUpdate.newCameraPosition(_mauritiusCamera),
-                                  );
+                                  _map.move(_mauritius, 15);
                                   _listenAround(_mauritius);
                                 },
                               ),
+                              SizedBox(height: 12.h),
+                              LocateMeButton(onPressed: _goToMyLocation),
                             ],
                           ),
                         ),
 
-                        // Actionable hint
                         if (_showHint)
                           Positioned(
                             left: 16.w,
@@ -570,9 +517,7 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
                               primaryActionText: _needsLocationPermission ? "Enable location" : "Add here",
                               onPrimaryAction: _needsLocationPermission ? _promptForLocationPermission : _addSpotAtCenter,
                               secondaryActionText: "Filters",
-                              onSecondaryAction: () {
-                                setState(() => _uiExpanded = true);
-                              },
+                              onSecondaryAction: () => setState(() => _uiExpanded = true),
                               onDismiss: _hideHint,
                             ),
                           ),
@@ -584,6 +529,31 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ----- small visual helpers for markers/clusters -----
+class _Pin extends StatelessWidget {
+  final Color color;
+  const _Pin({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(Icons.location_on_rounded, size: 32, color: color);
+  }
+}
+
+class _ClusterBubble extends StatelessWidget {
+  final int count;
+  const _ClusterBubble({required this.count});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF334155)),
+      child: Center(
+        child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
       ),
     );
   }

@@ -9,35 +9,39 @@ class MapSpotsService {
   final _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  CollectionReference<Map<String, dynamic>> get _col =>
-      _db.collection('map_spots');
+  CollectionReference<Map<String, dynamic>> get _col => _db.collection('map_spots');
 
-  /// Create a spot (visible to all). User must be signed in.
   Future<void> createSpot({
     required double lat,
     required double lng,
-    required String type,
+    required List<String> types,       // CHANGED
+    required String address,           // NEW
     String? description,
     String? createdByName,
+    int? approxQty,                    // NEW
+    String? accessNotes,               // NEW
   }) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) throw Exception('Not logged in');
 
-    final geohash = MiniGeohash.encode(lat, lng, precision: 7); // ~150m buckets
+    final geohash = MiniGeohash.encode(lat, lng, precision: 7);
+
     await _col.add({
-      'type': type,
+      'types': types,                  // list
+      'address': address,              // store address string
       'description': description ?? '',
       'createdBy': uid,
       'createdByName': createdByName,
       'lat': lat,
       'lng': lng,
+      'approxQty': approxQty,
+      'accessNotes': accessNotes,
       'geohash': geohash,
-      'cleaned': false, // driver UI will use later; ignored here
+      'cleaned': false,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
-  /// Delete only if the current user owns it (enforce in rules too).
   Future<void> deleteSpot(String id) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) throw Exception('Not logged in');
@@ -49,7 +53,19 @@ class MapSpotsService {
     await _col.doc(id).delete();
   }
 
-  /// Live stream of spots near a center (public view).
+  /// Driver (or admin) marks a spot as cleaned.
+  /// It switches icon (via `cleaned: true`), then deletes after [delay] seconds.
+  Future<void> markCleaned(String id, {Duration delay = const Duration(seconds: 15)}) async {
+    await _col.doc(id).update({
+      'cleaned': true,
+      'cleanedAt': FieldValue.serverTimestamp(),
+    });
+    // server-side TTL would be ideal; for now, client job:
+    Future.delayed(delay, () async {
+      try { await _col.doc(id).delete(); } catch (_) {}
+    });
+  }
+
   Stream<List<MapSpot>> spotsAround({
     required double lat,
     required double lng,
@@ -67,26 +83,21 @@ class MapSpotsService {
           .startAt([start])
           .endAt([end])
           .snapshots()
-          .map((q) => q.docs
-              .map((d) => MapSpot.fromDoc(d.id, d.data()))
-              .toList());
+          .map((q) => q.docs.map((d) => MapSpot.fromDoc(d.id, d.data())).toList());
     }).toList();
 
     return _zip(streams).map((lists) {
-      // merge + filter by exact distance on client
       final merged = <String, MapSpot>{};
       for (final l in lists) {
         for (final s in l) {
-          if (_distanceKm(lat, lng, s.lat, s.lng) <= radiusKm) {
-            merged[s.id] = s;
-          }
+          if (_distanceKm(lat, lng, s.lat, s.lng) <= radiusKm) merged[s.id] = s;
         }
       }
       return merged.values.toList();
     });
   }
 
-  // --- helpers ---
+  // --- helpers (unchanged) ---
   Stream<List<List<T>>> _zip<T>(List<Stream<List<T>>> inputs) async* {
     final buffers = List<List<T>>.generate(inputs.length, (_) => const []);
     final have = List<bool>.filled(inputs.length, false);
@@ -97,16 +108,12 @@ class MapSpotsService {
       subs.add(inputs[i].listen((list) {
         buffers[i] = list;
         have[i] = true;
-        if (have.every((v) => v)) {
-          controller.add(buffers.map((e) => List<T>.from(e)).toList());
-        }
+        if (have.every((v) => v)) controller.add(buffers.map((e) => List<T>.from(e)).toList());
       }, onError: controller.addError));
     }
 
     yield* controller.stream;
-    for (final s in subs) {
-      await s.cancel();
-    }
+    for (final s in subs) { await s.cancel(); }
   }
 
   double _deg2rad(double d) => d * (pi / 180.0);

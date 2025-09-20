@@ -30,14 +30,13 @@ dependencies:
   uuid: ^4.5.1
   intl: ^0.20.2
   qr_flutter: ^4.1.0
-  # maps /////////////////////////////////
-  google_maps_flutter: ^2.13.1
   geolocator: ^14.0.2
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
   http: ^1.5.0
   flutter_map_tile_caching: ^10.1.1
   flutter_map_location_marker: ^10.1.0
+  flutter_map_marker_cluster: ^8.1.0
 
 dev_dependencies:
   flutter_test:

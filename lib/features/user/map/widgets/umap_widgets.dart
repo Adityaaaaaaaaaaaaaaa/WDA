@@ -1,5 +1,8 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../../../model/map_spot.dart';
 import '../../widgets/waste_type_grid.dart' show wasteTypes, WasteType;
 
 /// ---------- Modern Design System ----------
@@ -658,117 +661,217 @@ class LocationPermissionSheet extends StatelessWidget {
 }
 
 /// ---------- Bottom sheets ----------
+// ---- Data returned by the picker (multi-select) ----
 class NewSpot {
-  final WasteType type;
-  final String? note;
-  final String? displayName;
-  const NewSpot({required this.type, this.note, this.displayName});
+  final Set<WasteType> types;      // at least 1 required
+  final String? note;              // description (optional)
+  final String? displayName;       // optional
+  final int? approxQty;            // optional pieces/bags estimate
+  final String? accessNotes;       // optional
+
+  const NewSpot({
+    required this.types,
+    this.note,
+    this.displayName,
+    this.approxQty,
+    this.accessNotes,
+  });
 }
 
 class NewSpotPicker extends StatefulWidget {
   const NewSpotPicker({super.key});
+
   @override
   State<NewSpotPicker> createState() => _NewSpotPickerState();
 }
 
 class _NewSpotPickerState extends State<NewSpotPicker> {
-  late WasteType _selected = wasteTypes.first;
-  final _noteController = TextEditingController();
-  final _nameController = TextEditingController();
+  final _note   = TextEditingController();
+  final _name   = TextEditingController();
+  final _qty    = TextEditingController();   // numeric text
+  final _access = TextEditingController();
+
+  final Set<WasteType> _selected = { wasteTypes.first };
 
   @override
   void dispose() {
-    _noteController.dispose();
-    _nameController.dispose();
+    _note.dispose();
+    _name.dispose();
+    _qty.dispose();
+    _access.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Scroll-safe to avoid RenderFlex overflow
+    final h = MediaQuery.of(context).size.height;
+    final kb = MediaQuery.of(context).viewInsets.bottom;
+
     return SafeArea(
       child: AnimatedPadding(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-        child: Container(
-          margin: EdgeInsets.all(16.w),
-          decoration: _modernCard(elevation: 6, radius: 24),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.all(24.w),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(child: Container(width: 40.w, height: 4.h, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2.r)))),
-                  SizedBox(height: 20.h),
-                  Text('Report Waste Spot', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppColors.text)),
-                  SizedBox(height: 4.h),
-                  Text('Help keep our environment clean', style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary)),
-                  SizedBox(height: 20.h),
-                  Text('Waste Type', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.text)),
-                  SizedBox(height: 12.h),
-
-                  // Horizontal pill selector (two columns, wide pills)
-                  SizedBox(
-                    height: 160.h,
-                    child: GridView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 8.h,
-                        crossAxisSpacing: 8.w,
-                        childAspectRatio: 3.8,
+        duration: const Duration(milliseconds: 150),
+        padding: EdgeInsets.only(bottom: kb),
+        child: SizedBox(
+          height: h * 0.80, // cap at 80%
+          child: Container(
+            margin: EdgeInsets.all(16.w),
+            decoration: _modernCard(elevation: 6, radius: 24),
+            child: Column(
+              children: [
+                // Header + close
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20.w, 16.h, 8.w, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Report Waste Spot',
+                                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppColors.text)),
+                            SizedBox(height: 4.h),
+                            Text('Help keep our environment clean',
+                                style: TextStyle(fontSize: 13.sp, color: AppColors.textSecondary)),
+                          ],
+                        ),
                       ),
-                      itemCount: wasteTypes.length,
-                      itemBuilder: (_, index) {
-                        final type = wasteTypes[index];
-                        final isSelected = type.label == _selected.label;
-                        return _WasteTypeSelectorPill(
-                          type: type,
-                          isSelected: isSelected,
-                          onTap: () => setState(() => _selected = type),
-                        );
-                      },
+                      IconButton(
+                        tooltip: 'Close',
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 20.h),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Waste Types (choose one or more)',
+                            style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.text)),
+                        SizedBox(height: 10.h),
+
+                        // Horizontal grid of chips -> compact (3 rows)
+                        Builder(
+                          builder: (_) {
+                            const rows = 3; // set to 4 if you prefer 4 lines
+                            final chipHeight = 44.h;
+                            final gridHeight = rows * chipHeight + (rows - 1) * 8.h;
+
+                            // pack chips into vertical columns (top→bottom), then scroll those columns horizontally
+                            final columns = <List<WasteType>>[];
+                            for (var i = 0; i < wasteTypes.length; i++) {
+                              final colIndex = i ~/ rows;
+                              if (columns.length <= colIndex) columns.add(<WasteType>[]);
+                              columns[colIndex].add(wasteTypes[i]);
+                            }
+
+                            return SizedBox(
+                              height: gridHeight,
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    for (final col in columns) ...[
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          for (final t in col)
+                                            Padding(
+                                              padding: EdgeInsets.only(bottom: 8.h),
+                                              child: _WasteTypeSelectorPill(
+                                                type: t,
+                                                isSelected: _selected.contains(t),
+                                                onTap: () {
+                                                  setState(() {
+                                                    final on = _selected.contains(t);
+                                                    if (on) {
+                                                      if (_selected.length > 1) _selected.remove(t); // keep ≥ 1
+                                                    } else {
+                                                      _selected.add(t);
+                                                    }
+                                                  });
+                                                },
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      SizedBox(width: 8.w),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+
+                        SizedBox(height: 18.h),
+                        _ModernTextField(
+                          controller: _note,
+                          label: 'Description',
+                          hint: 'Optional details about the waste...',
+                          maxLines: 3,
+                        ),
+                        SizedBox(height: 14.h),
+                        // numeric keyboard
+                        _ModernTextField(
+                          controller: _qty,
+                          label: 'Approx. Quantity',
+                          hint: 'e.g. 3 bags / ~8 items (numbers only)',
+                        ),
+                        SizedBox(height: 14.h),
+                        _ModernTextField(
+                          controller: _access,
+                          label: 'Access Notes',
+                          hint: 'Gate code, tricky entrance, best parking… (optional)',
+                          maxLines: 2,
+                        ),
+                        SizedBox(height: 14.h),
+                        _ModernTextField(
+                          controller: _name,
+                          label: 'Your Name',
+                          hint: 'Optional display name',
+                        ),
+                      ],
                     ),
                   ),
+                ),
 
-                  SizedBox(height: 20.h),
-                  _ModernTextField(
-                    controller: _noteController,
-                    label: 'Description',
-                    hint: 'Optional details about the waste...',
-                    maxLines: 3,
-                  ),
-                  SizedBox(height: 16.h),
-                  _ModernTextField(
-                    controller: _nameController,
-                    label: 'Your Name',
-                    hint: 'Optional display name',
-                  ),
-                  SizedBox(height: 24.h),
-
-                  SizedBox(
+                // Submit
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 20.h),
+                  child: SizedBox(
                     width: double.infinity,
                     child: _ModernButton(
                       text: 'Add Waste Spot',
                       icon: Icons.add_location_alt_rounded,
                       onPressed: () {
+                        if (_selected.isEmpty) return; // defensive (shouldn’t happen)
+                        final qty = int.tryParse(_qty.text.trim());
                         Navigator.pop(
                           context,
                           NewSpot(
-                            type: _selected,
-                            note: _noteController.text.trim().isEmpty ? null : _noteController.text.trim(),
-                            displayName: _nameController.text.trim(),
+                            types: _selected,
+                            note: _note.text.trim().isEmpty ? null : _note.text.trim(),
+                            displayName: _name.text.trim().isEmpty ? null : _name.text.trim(),
+                            approxQty: qty,
+                            accessNotes: _access.text.trim().isEmpty ? null : _access.text.trim(),
                           ),
                         );
                       },
                       style: _ModernButtonStyle.filled,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -776,6 +879,22 @@ class _NewSpotPickerState extends State<NewSpotPicker> {
     );
   }
 }
+
+class LocateMeButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  const LocateMeButton({super.key, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return _FabGlass(
+      gradient: const LinearGradient(colors: [Color(0xFF1D4ED8), Color(0xFF3B82F6)]),
+      icon: Icons.my_location_rounded,
+      onTap: onPressed,
+      tooltip: 'Locate me',
+    );
+  }
+}
+
 
 class _WasteTypeSelectorPill extends StatelessWidget {
   final WasteType type;
@@ -809,15 +928,12 @@ class _WasteTypeSelectorPill extends StatelessWidget {
             children: [
               Icon(type.icon, size: 16.sp, color: isSelected ? Colors.white : AppColors.secondary),
               SizedBox(width: 8.w),
-              Flexible(
-                child: Text(
-                  type.label,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.white : AppColors.secondary,
-                  ),
+              Text(
+                type.label,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : AppColors.secondary,
                 ),
               ),
             ],
@@ -829,7 +945,7 @@ class _WasteTypeSelectorPill extends StatelessWidget {
 }
 
 class SpotSheet extends StatelessWidget {
-  final dynamic spot;
+  final MapSpot spot;          // use the actual model, not dynamic
   final bool isOwner;
   final VoidCallback onDelete;
 
@@ -842,10 +958,9 @@ class SpotSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final wasteType = wasteTypes.firstWhere(
-      (w) => w.label == spot.type,
-      orElse: () => wasteTypes.first,
-    );
+    // Pick a primary color from the first type (fallback to the first waste type in the palette)
+    final primaryLabel = (spot.types.isNotEmpty ? spot.types.first : wasteTypes.first.label);
+    final primaryType   = wasteTypes.firstWhere((w) => w.label == primaryLabel, orElse: () => wasteTypes.first);
 
     return SafeArea(
       child: Container(
@@ -856,64 +971,176 @@ class SpotSheet extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 40.w, height: 4.h, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2.r))),
-              SizedBox(height: 20.h),
+              // drag handle + close
+              Row(
+                children: [
+                  Expanded(
+                    child: Center(
+                      child: Container(
+                        width: 40.w,
+                        height: 4.h,
+                        decoration: BoxDecoration(
+                          color: AppColors.border,
+                          borderRadius: BorderRadius.circular(2.r),
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+
+              // header
               Row(
                 children: [
                   Container(
-                    width: 48.w, height: 48.w,
-                    decoration: BoxDecoration(color: wasteType.color.withOpacity(0.12), borderRadius: BorderRadius.circular(24.r)),
-                    child: Icon(wasteType.icon, color: wasteType.color, size: 24.sp),
+                    width: 48.w,
+                    height: 48.w,
+                    decoration: BoxDecoration(
+                      color: primaryType.color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(24.r),
+                    ),
+                    child: Icon(primaryType.icon, color: primaryType.color, size: 24.sp),
                   ),
                   SizedBox(width: 16.w),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(wasteType.label, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppColors.text)),
-                        if (spot.createdByName?.isNotEmpty == true)
-                          Text('Reported by ${spot.createdByName}', style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary)),
+                        Text('Waste spot', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        if ((spot.createdByName ?? '').isNotEmpty)
+                          Text('Reported by ${spot.createdByName}',
+                              style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary)),
                       ],
                     ),
                   ),
                 ],
               ),
-              if (spot.description?.isNotEmpty == true) ...[
+
+              // multi-type chips
+              if (spot.types.isNotEmpty) ...[
+                SizedBox(height: 12.h),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 6.w,
+                    runSpacing: 6.h,
+                    children: [
+                      for (final label in spot.types)
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 11.sp,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // address
+              if ((spot.address).isNotEmpty) ...[
+                SizedBox(height: 12.h),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Text(spot.address, style: TextStyle(fontSize: 13.sp, color: AppColors.text)),
+                ),
+              ],
+
+              // quick info row(s)
+              SizedBox(height: 12.h),
+              _wrapInfo([
+                'Lat: ${spot.lat.toStringAsFixed(5)}  Lng: ${spot.lng.toStringAsFixed(5)}',
+                if (spot.approxQty != null) 'Approx. qty: ${spot.approxQty}',
+                if ((spot.accessNotes ?? '').isNotEmpty) 'Access: ${spot.accessNotes}',
+                if (spot.createdAt != null) 'Reported: ${spot.createdAt}',
+              ]),
+
+              // description
+              if ((spot.description).isNotEmpty) ...[
                 SizedBox(height: 16.h),
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.all(16.w),
-                  decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12.r), border: Border.all(color: AppColors.border)),
-                  child: Text(spot.description, style: TextStyle(fontSize: 13.sp, color: AppColors.text, height: 1.4)),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Text(
+                    spot.description,
+                    style: TextStyle(fontSize: 13.sp, color: AppColors.text, height: 1.4),
+                  ),
                 ),
               ],
+
               SizedBox(height: 20.h),
-              if (isOwner)
-                SizedBox(
-                  width: double.infinity,
-                  child: _ModernButton(
-                    text: 'Remove Spot',
-                    icon: Icons.delete_rounded,
-                    onPressed: onDelete,
-                    style: _ModernButtonStyle.destructive,
-                  ),
-                )
-              else
-                SizedBox(
-                  width: double.infinity,
-                  child: _ModernButton(
-                    text: 'Close',
-                    onPressed: () => Navigator.pop(context),
-                    style: _ModernButtonStyle.outlined,
-                  ),
+
+              // actions
+              SizedBox(
+                width: double.infinity,
+                child: _ModernButton(
+                  text: isOwner ? 'Remove Spot' : 'Close',
+                  icon: isOwner ? Icons.delete_rounded : null,
+                  onPressed: isOwner ? onDelete : () => Navigator.pop(context),
+                  style: isOwner ? _ModernButtonStyle.destructive : _ModernButtonStyle.outlined,
                 ),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+
+  // compact key-value chips builder used above
+  Widget _wrapInfo(List<String> items) {
+    final visible = items.where((s) => s.trim().isNotEmpty).toList();
+    if (visible.isEmpty) return const SizedBox.shrink();
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Wrap(
+        spacing: 8.w,
+        runSpacing: 8.h,
+        children: [
+          for (final s in visible)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Text(s, style: TextStyle(fontSize: 12.sp, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+            ),
+        ],
+      ),
+    );
+  }
 }
+
+
 
 class FilterAllSheet extends StatefulWidget {
   final Set<String> initial;
