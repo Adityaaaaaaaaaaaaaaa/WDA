@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 
 class UAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title; // Just the center text (e.g., "Home")
@@ -124,7 +125,8 @@ class _UAppBarState extends State<UAppBar> {
                       const SnackBar(
                         content: Text("Settings tapped! (to implement)"),
                       ),
-                    );
+                    );                      
+                    context.push('/uSettings');
                   },
                 ),
               ],
