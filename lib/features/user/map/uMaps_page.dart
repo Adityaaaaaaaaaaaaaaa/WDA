@@ -39,8 +39,7 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
   LatLng _initialCenter = _mauritius;
   double _initialZoom = 15;
 
-  final _markers = <Marker>[];
-  //final _clusterController = MarkerClusterController();
+  List<Marker> _markers = const [];
 
   StreamSubscription<List<MapSpot>>? _sub;
   Timer? _debounce;
@@ -186,36 +185,39 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
     _sub?.cancel();
     _lastQueryCenter = center;
     final radiusKm = _radiusKmForZoom(_zoom);
+
     _sub = _svc
         .spotsAround(lat: center.latitude, lng: center.longitude, radiusKm: radiusKm)
         .listen((spots) {
-      if (!mounted) return;
-      final ms = <Marker>[];
-      for (final s in spots) {
-        if (!_passesFilter(s)) continue;
-        final primaryLabel = (s.types.isNotEmpty ? s.types.first : wasteTypes.first.label);
-        final color = wasteTypes
-            .firstWhere((w) => w.label == primaryLabel, orElse: () => wasteTypes.first)
-            .color;
+          if (!mounted) return;
 
-        ms.add(
-          Marker(
-            point: LatLng(s.lat, s.lng),
-            width: 36,
-            height: 36,
-            child: GestureDetector(
-              onTap: () => _showSpotSheet(s),
-              child: _Pin(color: color),
-            ),
-          ),
-        );
-      }
-      setState(() {
-        _markers
-          ..clear()
-          ..addAll(ms);
-      });
-    });
+          final ms = <Marker>[];
+          for (final s in spots) {
+            if (!_passesFilter(s)) continue;
+
+            final primaryLabel = s.types.isNotEmpty ? s.types.first : wasteTypes.first.label;
+            final color = wasteTypes.firstWhere(
+              (w) => w.label == primaryLabel,
+              orElse: () => wasteTypes.first,
+            ).color;
+
+            ms.add(
+              Marker(
+                point: LatLng(s.lat, s.lng),
+                width: 36,
+                height: 36,
+                child: GestureDetector(
+                  onTap: () => _showSpotSheet(s),
+                  child: _Pin(color: color),
+                ),
+              ),
+            );
+          }
+
+          setState(() {
+            _markers = ms;
+          });
+        });
   }
 
   void _onMapEvent(MapEvent e) {
@@ -290,6 +292,27 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
       approxQty: res.approxQty,
       accessNotes: res.accessNotes,
     );
+
+    // Optimistic local pin so the user sees it immediately:
+    final primaryLabel = (res.types.isNotEmpty ? res.types.first.label : wasteTypes.first.label);
+    final color = wasteTypes.firstWhere((w) => w.label == primaryLabel, orElse: () => wasteTypes.first).color;
+
+    setState(() {
+      _markers.add(
+        Marker(
+          point: at,
+          width: 36,
+          height: 36,
+          child: GestureDetector(
+            onTap: () {}, // optional: you could open a lightweight temp sheet here
+            child: _Pin(color: color),
+          ),
+        ),
+      );
+    });
+
+    // Also re-subscribe so Firestore stream brings the real doc in:
+    _listenAround(_cameraCenter);
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -428,6 +451,7 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
 
                             // Clusters
                             MarkerClusterLayerWidget(
+                              key: ValueKey('clusters_${_markers.length}_${_zoom.toStringAsFixed(2)}'),
                               options: MarkerClusterLayerOptions(
                                 maxClusterRadius: 45,
                                 size: const Size(44, 44),

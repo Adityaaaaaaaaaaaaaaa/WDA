@@ -83,7 +83,7 @@ class MapSpotsService {
           .startAt([start])
           .endAt([end])
           .snapshots()
-          .map((q) => q.docs.map((d) => MapSpot.fromDoc(d.id, d.data())).toList());
+          .map((q) => q.docs.map((d) => MapSpot.fromDoc(d)).toList());
     }).toList();
 
     return _zip(streams).map((lists) {
