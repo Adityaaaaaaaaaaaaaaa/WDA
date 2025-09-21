@@ -126,7 +126,7 @@ class _UAppBarState extends State<UAppBar> {
                         content: Text("Settings tapped! (to implement)"),
                       ),
                     );                      
-                    context.push('/uSettings');
+                    context.push('/Settings');
                   },
                 ),
               ],

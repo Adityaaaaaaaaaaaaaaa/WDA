@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../model/task_model.dart';
-import '../../widgets/status_chip.dart';
+import '../../../widgets/status_chip.dart';
 
 class TaskCard extends StatelessWidget {
   final TaskModel task;

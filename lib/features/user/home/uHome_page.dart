@@ -3,9 +3,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../widgets/uAppBar.dart';
+import '../../widgets/AppBar.dart';
 import 'widgets/uGreetingCard.dart';
-import '../widgets/uNavBar.dart';
+import '../../widgets/uNavBar.dart';
 
 class UHomePage extends StatefulWidget {
   const UHomePage({super.key});

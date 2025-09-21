@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../model/map_spot.dart';
-import '../../widgets/waste_type_grid.dart' show wasteTypes, WasteType;
+import '../../../widgets/waste_type_grid.dart' show wasteTypes, WasteType;
 
 /// ---------- Modern Design System ----------
 class AppColors {

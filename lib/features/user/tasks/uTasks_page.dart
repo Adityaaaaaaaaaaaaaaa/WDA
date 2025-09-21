@@ -4,8 +4,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import '../../../model/task_model.dart';
 import '../../../services/uTasks_updateDelete.dart';
-import '../widgets/uAppBar.dart';
-import '../widgets/uNavBar.dart';
+import '../../widgets/AppBar.dart';
+import '../../widgets/uNavBar.dart';
 import 'widgets/task_card.dart';
 
 class UTasksPage extends StatelessWidget {

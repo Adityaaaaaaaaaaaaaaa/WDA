@@ -3,8 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import '../../../model/task_model.dart';
 import '../../../services/uTasks_updateDelete.dart';
-import '../widgets/status_chip.dart';
-import '../widgets/uAppBar.dart';
+import '../../widgets/status_chip.dart';
+import '../../widgets/AppBar.dart';
 import 'widgets/task_detail_widgets.dart';
 
 class UTaskDetailsPage extends StatelessWidget {

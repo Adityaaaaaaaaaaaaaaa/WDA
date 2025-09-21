@@ -11,6 +11,9 @@ class TaskModel {
   final String address;
   final String notes;
 
+  final double? lat;
+  final double? lng;
+
   // points system
   final int taskPoints;
   final int creationPoints;
@@ -27,7 +30,7 @@ class TaskModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String source;
-  final String taskType; // pickup, map_report, hazardous, etc.
+  final String taskType;
 
   // qr tracking
   final String qrCodeData;
@@ -43,7 +46,7 @@ class TaskModel {
   final bool cancelledByUser;
   final bool cancelledBySystem;
 
-  TaskModel({
+  const TaskModel({
     required this.taskId,
     required this.userId,
     required this.wasteTypes,
@@ -52,6 +55,8 @@ class TaskModel {
     required this.pickupDateTime,
     required this.address,
     required this.notes,
+    this.lat,
+    this.lng,
     required this.taskPoints,
     required this.creationPoints,
     required this.completionPoints,
@@ -74,59 +79,64 @@ class TaskModel {
     this.cancelledBySystem = false,
   });
 
+  /// Helper: pretty date/time
+  String get pickupWhenText {
+    final dt = pickupDateTime;
+    if (dt == null) return "Flexible";
+    final hh = dt.hour.toString().padLeft(2, '0');
+    final mm = dt.minute.toString().padLeft(2, '0');
+    return "${dt.day}/${dt.month} • $hh:$mm";
+  }
+
   factory TaskModel.fromMap(Map<String, dynamic> data) {
+    // tolerate numbers coming as int/double
+    double? _toDYN(dynamic v) => v == null ? null : (v as num).toDouble();
+
     return TaskModel(
       taskId: data['taskId'] ?? '',
       userId: data['userId'] ?? '',
       wasteTypes: List<String>.from(data['wasteTypes'] ?? []),
       size: data['size'] ?? '',
       urgency: data['urgency'] ?? '',
-      // pickupDateTime: data['pickupDateTime'] != null
-      //     ? DateTime.tryParse(data['pickupDateTime'])
-      //     : null,
       address: data['address'] ?? '',
       notes: data['notes'] ?? '',
 
-      // points
+      // NEW
+      lat: _toDYN(data['lat']) ?? _toDYN((data['location'] ?? {})['lat']),
+      lng: _toDYN(data['lng']) ?? _toDYN((data['location'] ?? {})['lng']),
+
       taskPoints: data['taskPoints'] ?? 0,
       creationPoints: data['creationPoints'] ?? 0,
       completionPoints: data['completionPoints'] ?? 0,
       awardedCompletion: data['awardedCompletion'] ?? false,
 
-      // driver
       driverAssigned: data['driverAssigned'] ?? false,
-      driverId: data['driverId'],   // nullable
-      driverName: data['driverName'], // nullable
+      driverId: data['driverId'],
+      driverName: data['driverName'],
       driverSeen: data['driverSeen'] ?? false,
 
-      // lifecycle
       createdAt: data['createdAt'] is Timestamp
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
-
       updatedAt: data['updatedAt'] is Timestamp
           ? (data['updatedAt'] as Timestamp).toDate()
           : DateTime.now(),
-
       pickupDateTime: data['pickupDateTime'] is Timestamp
           ? (data['pickupDateTime'] as Timestamp).toDate()
           : null,
       source: data['source'] ?? "user_request",
       taskType: data['taskType'] ?? "pickup",
 
-      // qr
       qrCodeData: data['qrCodeData'] ?? '',
       qrCodeUsed: data['qrCodeUsed'] ?? false,
 
-      // status
       status: data['status'] ?? "pending",
       progressStages: Map<String, dynamic>.from(data['progressStages'] ?? {}),
       lastProgressStage: data['lastProgressStage'] ?? "pending",
 
-      // flags
       userDeleted: data['userDeleted'] ?? false,
       cancelledByUser: data['cancelledByUser'] ?? false,
       cancelledBySystem: data['cancelledBySystem'] ?? false,
-    );  
+    );
   }
 }

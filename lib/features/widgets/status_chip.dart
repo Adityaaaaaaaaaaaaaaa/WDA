@@ -1,7 +1,9 @@
 // lib/features/user/widgets/status_chip.dart
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../../../model/task_model.dart';
+import '../../model/task_model.dart';
 
 class StatusChipTheme {
   static Color colorFor(TaskModel t) {
@@ -32,13 +34,30 @@ class OutlinedChip extends StatelessWidget {
         border: Border.all(color: color.withOpacity(.35), width: 1.2),
         boxShadow: [BoxShadow(color: color.withOpacity(.12), blurRadius: 8, offset: const Offset(0, 3))],
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (icon != null) ...[
-          Icon(icon, size: 12.5.sp, color: color),
-          SizedBox(width: 6.w),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 12.5.sp, color: color),
+            SizedBox(width: 6.w),
+          ],
+          // 🔧 key change: make text flexible + wrap + ellipsis
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 3,
+              softWrap: true,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11.5.sp,
+                fontWeight: FontWeight.w600,
+                color: color,
+                height: 1.15, // nicer line height
+              ),
+            ),
+          ),
         ],
-        Text(label, style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w600, color: color)),
-      ]),
+      ),
     );
   }
 }
@@ -82,14 +101,22 @@ class StatusChip extends StatelessWidget {
         border: Border.all(color: color.withOpacity(.35), width: 1.2),
         boxShadow: [BoxShadow(color: color.withOpacity(.12), blurRadius: 8, offset: const Offset(0, 3))],
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(
-          width: 8.w, height: 8.w,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        SizedBox(width: 6.w),
-        Text(text, style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w700, color: color)),
-      ]),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(width: 8.w, height: 8.w, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          SizedBox(width: 6.w),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 2,
+              softWrap: true,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 11.5.sp, fontWeight: FontWeight.w700, color: color, height: 1.15),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

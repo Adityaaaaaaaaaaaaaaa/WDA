@@ -11,6 +11,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'config/firebase_options.dart';
 import 'config/performance.dart';
 import 'features/auth/signin_page.dart';
+import 'features/driver/home/dHome_page.dart';
+import 'features/driver/jobs/dJobs_page.dart';
+import 'features/driver/jobs/dJobsDetail_page.dart';
 import 'features/onboarding/onboarding.dart';
 import 'features/setup/driverSetup_page.dart';
 import 'features/setup/userSetup_page.dart';
@@ -19,9 +22,10 @@ import 'features/splash/splash_screen.dart';
 import 'features/user/home/uHome_page.dart';
 import 'features/user/map/uMaps_page.dart';
 import 'features/user/request/uRequest_page.dart';
-import 'features/user/settings/settings_page.dart';
+import 'features/settings/settings_page.dart';
 import 'features/user/tasks/uTaskDetails_page.dart';
 import 'features/user/tasks/uTasks_page.dart';
+import 'model/task_model.dart';
 import 'utils/adaptive_transition.dart';
 
 
@@ -110,8 +114,39 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const UMapsPage(),
     ),
     GoRoute(
-      path: '/uSettings',
+      path: '/Settings',
       builder: (context, state) => const SettingsPage(),
+    ),
+    GoRoute(
+      path: '/dHome',
+      builder: (context, state) => const DHomePage(),
+    ),    
+    GoRoute(
+      path: '/dJobs',
+      builder: (context, state) => const DJobsPage(),
+    ),
+    GoRoute(
+      path: '/dJobDetail',
+      builder: (context, state) {
+        final extra = state.extra;
+
+        if (extra is TaskModel) {
+          return DJobDetailPage(task: extra);
+        }
+        if (extra is String && extra.isNotEmpty) {
+          return DJobDetailPage(taskId: extra);
+        }
+
+        // optional: support deep link /dJobDetail?id=...
+        final idFromQuery = state.uri.queryParameters['id'];
+        if (idFromQuery != null && idFromQuery.isNotEmpty) {
+          return DJobDetailPage(taskId: idFromQuery);
+        }
+
+        return const Scaffold(
+          body: Center(child: Text('Missing task for /dJobDetail')),
+        );
+      },
     ),
   ],
 );

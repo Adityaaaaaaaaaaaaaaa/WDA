@@ -15,9 +15,9 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../model/map_spot.dart';
 import '../../../services/map_spots_service.dart';
-import '../widgets/uAppBar.dart';
-import '../widgets/uNavBar.dart';
-import '../widgets/waste_type_grid.dart' show wasteTypes;
+import '../../widgets/AppBar.dart';
+import '../../widgets/uNavBar.dart';
+import '../../widgets/waste_type_grid.dart' show wasteTypes;
 import 'widgets/umap_widgets.dart';
 
 const _mauritius = LatLng(-20.159040837339187, 57.50168322852903);
