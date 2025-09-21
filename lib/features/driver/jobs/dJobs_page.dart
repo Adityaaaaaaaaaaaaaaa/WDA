@@ -7,8 +7,7 @@ import '../../../model/task_model.dart';
 import '../../../services/dTasks_service.dart';
 import '../../widgets/AppBar.dart';
 import '../../widgets/dNavBar.dart';
-import 'widgets/dJobs_widgets.dart' hide TaskCardAvailable;
-import 'widgets/task_card_available.dart';
+import 'widgets/dJobs_widgets.dart';
 
 class DJobsPage extends StatefulWidget {
   const DJobsPage({super.key});
@@ -69,8 +68,12 @@ class _AvailableTab extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (!snap.hasData || snap.data!.docs.isEmpty) {
-          return Center(child: Text("No available jobs right now.",
-              style: TextStyle(fontSize: 14.sp, color: Colors.black54)));
+          return Center(
+            child: Text(
+              "No available jobs right now.",
+              style: TextStyle(fontSize: 14.sp, color: Colors.black54),
+            ),
+          );
         }
 
         final tasks = snap.data!.docs
@@ -96,27 +99,54 @@ class _MyTasksTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: svc.streamMyTasks(),
+      stream: svc.streamMyTasks(), // in_progress + scheduled
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
         if (!snap.hasData || snap.data!.docs.isEmpty) {
-          return Center(child: Text("You don't have active jobs yet.",
-              style: TextStyle(fontSize: 14.sp, color: Colors.black54)));
+          return Center(
+            child: Text(
+              "You don't have active jobs yet.",
+              style: TextStyle(fontSize: 14.sp, color: Colors.black54),
+            ),
+          );
         }
 
-        final tasks = snap.data!.docs
-            .map((d) => TaskModel.fromMap(d.data()))
-            .toList()
-          ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+        // Build entries (task + acceptedAt) so we can sort by acceptedAt
+        final entries = snap.data!.docs.map((d) {
+          final data = d.data();
+          final task = TaskModel.fromMap(data);
+          final acceptedAtTs = data['acceptedAt'] as Timestamp?;
+          final acceptedAt = acceptedAtTs?.toDate();
+          return (task: task, acceptedAt: acceptedAt);
+        }).toList();
+
+        // Sort:
+        // 1) in_progress first
+        // 2) then scheduled by acceptedAt asc (fallback to createdAt asc)
+        entries.sort((a, b) {
+          final aStatus = a.task.status;
+          final bStatus = b.task.status;
+
+          if (aStatus == 'in_progress' && bStatus != 'in_progress') return -1;
+          if (bStatus == 'in_progress' && aStatus != 'in_progress') return 1;
+
+          if (aStatus == 'scheduled' && bStatus == 'scheduled') {
+            final aKey = a.acceptedAt ?? a.task.createdAt;
+            final bKey = b.acceptedAt ?? b.task.createdAt;
+            return aKey.compareTo(bKey); // oldest accepted first
+          }
+
+          // Fallback: newer updatedAt first
+          return b.task.updatedAt.compareTo(a.task.updatedAt);
+        });
 
         return ListView.separated(
           padding: EdgeInsets.fromLTRB(16.w, 6.h, 16.w, 16.h),
-          itemCount: tasks.length,
+          itemCount: entries.length,
           separatorBuilder: (_, __) => SizedBox(height: 12.h),
-          // svc: null -> Accept button hidden inside card
-          itemBuilder: (_, i) => TaskCardAvailable(task: tasks[i], svc: null),
+          itemBuilder: (_, i) => TaskCardAvailable(task: entries[i].task, svc: null),
         );
       },
     );
@@ -136,8 +166,12 @@ class _CompletedTab extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (!snap.hasData || snap.data!.docs.isEmpty) {
-          return Center(child: Text("No completed jobs yet.",
-              style: TextStyle(fontSize: 14.sp, color: Colors.black54)));
+          return Center(
+            child: Text(
+              "No completed jobs yet.",
+              style: TextStyle(fontSize: 14.sp, color: Colors.black54),
+            ),
+          );
         }
 
         final tasks = snap.data!.docs

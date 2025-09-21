@@ -46,92 +46,95 @@ class BlueSegmentedTab extends StatelessWidget {
 
 class TaskCardAvailable extends StatelessWidget {
   final TaskModel task;
-  final DriverTasksService svc;
+  final DriverTasksService? svc; // nullable => hide Accept in My Tasks
   const TaskCardAvailable({super.key, required this.task, required this.svc});
+
+  String _statusLabel() {
+    if (task.status == 'completed') return 'Completed';
+    if (task.status == 'scheduled') return 'Scheduled';
+    if (task.driverAssigned) return 'In Progress';
+    return 'Available';
+  }
+
+  Color _statusBg() {
+    if (task.status == 'completed') return Colors.green.shade100;
+    if (task.status == 'scheduled') return Colors.indigo.shade100;
+    if (task.driverAssigned) return Colors.blue.shade100;
+    return Colors.orange.shade100;
+  }
+
+  Color _statusFg() {
+    if (task.status == 'completed') return Colors.green.shade800;
+    if (task.status == 'scheduled') return Colors.indigo.shade800;
+    if (task.driverAssigned) return Colors.blue.shade800;
+    return Colors.orange.shade800;
+  }
 
   @override
   Widget build(BuildContext context) {
     final primaryWaste = task.wasteTypes.isNotEmpty ? task.wasteTypes.first : "General Waste";
+    final when = task.pickupDateTime;
+    final whenText = when != null
+        ? "${when.day}/${when.month} • ${when.hour.toString().padLeft(2, '0')}:${when.minute.toString().padLeft(2, '0')}"
+        : "Flexible";
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18.r),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))],
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
       ),
       child: Padding(
         padding: EdgeInsets.all(14.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Row(
-              children: [
-                Container(
-                  width: 42.w,
-                  height: 42.w,
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade100,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: const Icon(Icons.recycling_rounded, color: Colors.green),
-                ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(primaryWaste, style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w800)),
-                      SizedBox(height: 2.h),
-                      Text("Job #${task.taskId.split('_').last}",
-                          style: TextStyle(fontSize: 11.sp, color: Colors.grey[600])),
-                    ],
-                  ),
-                ),
-                _chip("Available", Colors.orange.shade50, Colors.orange.shade800),
-              ],
-            ),
-            SizedBox(height: 12.h),
-
-            // Address & Time
             Row(children: [
-              const Icon(Icons.place_rounded, size: 18, color: Colors.grey),
+              Container(
+                width: 38.w, height: 38.w,
+                decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(12.r)),
+                child: const Icon(Icons.recycling_rounded, color: Colors.green),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(primaryWaste, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700)),
+                    Text("Job ID: ${task.taskId.split('_').last}",
+                        style: TextStyle(fontSize: 11.sp, color: Colors.grey[600])),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                decoration: BoxDecoration(color: _statusBg(), borderRadius: BorderRadius.circular(10.r)),
+                child: Text(_statusLabel(),
+                    style: TextStyle(fontSize: 11.sp, color: _statusFg(), fontWeight: FontWeight.w700)),
+              ),
+            ]),
+            SizedBox(height: 10.h),
+            Row(children: [
+              const Icon(Icons.place_rounded, size: 16, color: Colors.grey),
               SizedBox(width: 6.w),
-              Expanded(child: Text(task.address, style: TextStyle(fontSize: 12.5.sp))),
+              Expanded(child: Text(task.address, style: TextStyle(fontSize: 12.sp, color: Colors.black87))),
             ]),
             SizedBox(height: 6.h),
             Row(children: [
-              const Icon(Icons.access_time_rounded, size: 18, color: Colors.grey),
+              const Icon(Icons.access_time_rounded, size: 16, color: Colors.grey),
               SizedBox(width: 6.w),
-              Text(task.pickupWhenText, style: TextStyle(fontSize: 12.5.sp)),
+              Text(whenText, style: TextStyle(fontSize: 12.sp, color: Colors.black87)),
             ]),
-            SizedBox(height: 10.h),
-
-            // Meta chips
-            Wrap(
-              spacing: 8.w,
-              runSpacing: 6.h,
-              children: [
-                _chip(task.size, Colors.blue.shade50, Colors.blue.shade800),
-                _chip(task.urgency, Colors.purple.shade50, Colors.purple.shade800),
-                _chip("${task.taskPoints} pts", Colors.teal.shade50, Colors.teal.shade800),
-              ],
-            ),
-
             if (task.notes.trim().isNotEmpty) ...[
-              SizedBox(height: 10.h),
+              SizedBox(height: 8.h),
               Container(
-                width: double.infinity,
                 padding: EdgeInsets.all(10.w),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Text(task.notes, style: TextStyle(fontSize: 12.5.sp)),
+                decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(10.r)),
+                child: Text(task.notes, style: TextStyle(fontSize: 12.sp, color: Colors.black87)),
               ),
             ],
+            SizedBox(height: 12.h),
 
-            SizedBox(height: 14.h),
             Row(
               children: [
                 Expanded(
@@ -142,21 +145,32 @@ class TaskCardAvailable extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                     ),
-                    child: Text("View Details", style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w800)),
+                    child: Text("View Details",
+                        style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.w700)),
                   ),
                 ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async => svc.acceptTask(task),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green.shade600,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                      padding: EdgeInsets.symmetric(vertical: 12.h),
+                if (svc != null) ...[
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await svc!.acceptTask(task);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Job accepted")),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green.shade600,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      child: const Text("Accept Job",
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                     ),
-                    child: const Text("Accept Job", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
                   ),
-                ),
+                ],
               ],
             ),
           ],
@@ -164,10 +178,4 @@ class TaskCardAvailable extends StatelessWidget {
       ),
     );
   }
-
-  Widget _chip(String text, Color bg, Color fg) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12.r)),
-        child: Text(text, style: TextStyle(color: fg, fontSize: 11.5.sp, fontWeight: FontWeight.w700)),
-      );
 }
