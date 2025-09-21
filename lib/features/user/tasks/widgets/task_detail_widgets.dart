@@ -225,12 +225,6 @@ class ProgressTimeline extends StatelessWidget {
         hint: 'Driver reached pickup spot.'
       ),
       (
-        key: 'collected',
-        label: 'Collected',
-        icon: Icons.delete_sweep_rounded,
-        hint: 'Items collected.'
-      ),
-      (
         key: 'atLandfill',
         label: 'Processing',
         icon: Icons.factory_rounded,

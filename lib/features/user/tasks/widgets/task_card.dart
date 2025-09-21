@@ -21,11 +21,13 @@ class TaskCard extends StatelessWidget {
     if (userDeleted || cancelled || status == "cancelled") return Colors.red;
     switch (status) {
       case "pending":
-        return Colors.deepOrange;
+        return Colors.red;
       case "in_progress":
         return Colors.blue;
       case "completed":
         return Colors.green;
+      case "scheduled":
+        return Colors.deepOrange;
       default:
         return Colors.black54;
     }
