@@ -1,6 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:async';
-import 'dart:ui' show ImageFilter; // for blur/glass + QR blur
+import 'dart:ui' show ImageFilter, FontFeature;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -67,7 +67,7 @@ class JobHeader extends StatelessWidget {
 
   String _prettyId(String raw) {
     final short = raw.length > 6 ? raw.substring(0, 6) : raw;
-    return '#$short'; // compact pill
+    return '#$short';
   }
 
   @override
@@ -79,14 +79,16 @@ class JobHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(8.r),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: Text(_prettyId(jobId),
-          style: TextStyle(
-            fontSize: 11.sp,
-            letterSpacing: .3,
-            fontFeatures: const [FontFeature.tabularFigures()],
-            color: const Color(0xFF334155),
-            fontWeight: FontWeight.w700,
-          )),
+      child: Text(
+        _prettyId(jobId),
+        style: TextStyle(
+          fontSize: 11.sp,
+          letterSpacing: .3,
+          fontFeatures: const [FontFeature.tabularFigures()],
+          color: const Color(0xFF334155),
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
 
     return Column(
@@ -178,6 +180,109 @@ class RequesterInfo extends StatelessWidget {
   }
 }
 
+/// ---------- Task Details summary (address, coords, chips, size, urgency, notes) ----------
+
+class TaskDetailsSummary extends StatelessWidget {
+  const TaskDetailsSummary({super.key, required this.task});
+  final dynamic task; // TaskModel-like (we only read fields)
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = task.wasteTypes.cast<String>();
+    final hasNotes = (task.notes as String).trim().isNotEmpty;
+    final coordText = (task.lat != null && task.lng != null)
+        ? "(${(task.lat as double).toStringAsFixed(2)}, ${(task.lng as double).toStringAsFixed(2)})"
+        : "—";
+
+    Widget chip(String label) => Container(
+          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade50,
+            border: Border.all(color: Colors.blue.shade200),
+            borderRadius: BorderRadius.circular(20.r),
+          ),
+          child: Text(label, style: TextStyle(fontSize: 11.5.sp, color: Colors.blue.shade800, fontWeight: FontWeight.w700)),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Details', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w800)),
+        SizedBox(height: 10.h),
+
+        // Address & coords
+        Row(children: [
+          const Icon(Icons.place_rounded, size: 16, color: Colors.grey),
+          SizedBox(width: 6.w),
+          Expanded(child: Text(task.address, style: TextStyle(fontSize: 12.5.sp))),
+        ]),
+        SizedBox(height: 6.h),
+        Row(children: [
+          const Icon(Icons.gps_fixed_rounded, size: 16, color: Colors.grey),
+          SizedBox(width: 6.w),
+          Text(coordText, style: TextStyle(fontSize: 12.5.sp, color: Colors.black87)),
+        ]),
+
+        SizedBox(height: 10.h),
+
+        // Size / Urgency
+        Wrap(
+          spacing: 8.w,
+          runSpacing: 8.h,
+          children: [
+            _infoPill(Icons.scale_rounded, 'Size: ${task.size}'),
+            _infoPill(Icons.flash_on_rounded, 'Urgency: ${task.urgency}'),
+          ],
+        ),
+
+        SizedBox(height: 10.h),
+
+        // Waste types chips
+        if (chips.isNotEmpty) ...[
+          Text('Waste Types', style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700)),
+          SizedBox(height: 8.h),
+          Wrap(
+            spacing: 8.w,
+            runSpacing: 8.h,
+            children: [for (final c in chips) chip(c)],
+          ),
+          SizedBox(height: 10.h),
+        ],
+
+        // Notes
+        if (hasNotes)
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Text(task.notes, style: TextStyle(fontSize: 12.5.sp, color: Colors.black87)),
+          ),
+      ],
+    );
+  }
+
+  Widget _infoPill(IconData icon, String label) => Container(
+        padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20.r),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: Colors.grey.shade700),
+            SizedBox(width: 6.w),
+            Text(label, style: TextStyle(fontSize: 12.sp, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      );
+}
+
 /// ---------- QR (round modules) with lock/blur until atLocation ----------
 
 class QrSection extends StatelessWidget {
@@ -235,33 +340,7 @@ class QrSection extends StatelessWidget {
                 child: has ? _RoundQr(data: qrData) : _qrPlaceholder(),
               ),
               if (!unlocked)
-                Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16.r),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                      child: Container(
-                        color: Colors.white.withOpacity(0.15),
-                        alignment: Alignment.center,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.info_outline_rounded, color: Colors.red, size: 32.sp),
-                            SizedBox(height: 6.h),
-                            Text(
-                              'QR visible at pickup',
-                              style: TextStyle(fontSize: 15.sp, color: Colors.red, fontWeight: FontWeight.w900),
-                            ),
-                            Text(
-                              '(when "At pickup" is active)',
-                              style: TextStyle(fontSize: 13.sp, color: Colors.red, fontWeight: FontWeight.w500),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                PositionedFillBlurOverlay(),
             ],
           ),
         ),
@@ -274,6 +353,41 @@ class QrSection extends StatelessWidget {
         height: 210.w,
         child: const Center(child: CircularProgressIndicator(strokeWidth: 3)),
       );
+}
+
+class PositionedFillBlurOverlay extends StatelessWidget {
+  const PositionedFillBlurOverlay({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16.r),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: Container(
+            color: Colors.white.withOpacity(0.15),
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.info_rounded, color: Color(0xFF0EA5E9)),
+                SizedBox(height: 6.h),
+                Text(
+                  'QR visible at pickup',
+                  style: TextStyle(fontSize: 12.sp, color: const Color(0xFF0EA5E9), fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  '(when "At pickup" is active)',
+                  style: TextStyle(fontSize: 11.sp, color: Colors.black54),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _RoundQr extends StatelessWidget {

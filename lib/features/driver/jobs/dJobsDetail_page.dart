@@ -1,6 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:async';
-import 'dart:ui';
+import 'dart:ui' show ImageFilter;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -128,6 +128,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
   }
 
   // --- actions
+
   Future<void> _accept(TaskModel t) async {
     final user = _auth.currentUser;
     if (user == null) return;
@@ -145,6 +146,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
   }
 
   Future<void> _abort(TaskModel t) async {
+    // Abort should NOT award completion points (and we don't touch them here).
     await _db.collection('tasks').doc(t.taskId).update({
       'driverAssigned': false,
       'driverId': null,
@@ -174,19 +176,51 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
 
     final nextKey = _order[cur + 1];
 
+    // Completing from landfill step -> award completion points (once)
     if (nextKey == 'atLandfill') {
       stages['atLandfill'] = true;
       stages['completed'] = true;
+
+      // 1) mark this task as completed
       await ref.update({
         'status': 'completed',
         'progressStages': stages,
         'lastProgressStage': 'completed',
         'updatedAt': FieldValue.serverTimestamp(),
       });
+
+      // 2) award remaining points (service guards against double-award)
       await URequestService().awardCompletionPoints(live.taskId, live.userId);
+
+      // 3) PROMOTE next scheduled task for this driver to in_progress (FIFO by acceptedAt)
+      final String? driverId = live.driverId;
+      if (driverId != null && driverId.isNotEmpty) {
+        try {
+          final nextScheduled = await _db
+              .collection('tasks')
+              .where('driverId', isEqualTo: driverId)
+              .where('status', isEqualTo: 'scheduled')
+              .orderBy('acceptedAt')
+              .limit(1)
+              .get();
+
+          if (nextScheduled.docs.isNotEmpty) {
+            final nextRef = nextScheduled.docs.first.reference;
+            await nextRef.update({
+              'status': 'in_progress',
+              'progressStages.enRoute': true,
+              'lastProgressStage': 'enRoute',
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+          }
+        } catch (_) {
+          // If there is no index or query fails, we just skip promotion silently.
+        }
+      }
       return;
     }
 
+    // regular step
     stages[nextKey] = true;
     await ref.update({
       'progressStages': stages,
@@ -206,7 +240,36 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
 
     final key = _order[cur];
     stages[key] = false;
-    if (key == 'completed') stages['atLandfill'] = false;
+
+    // If undoing completed, also undo landfill AND revoke completion points if they were awarded
+    if (key == 'completed') {
+      stages['atLandfill'] = false;
+
+      if (live.awardedCompletion) {
+        // Revoke completion points & flags
+        final batch = _db.batch();
+        final taskRef = _db.collection('tasks').doc(live.taskId);
+        batch.update(taskRef, {
+          'awardedCompletion': false,
+        });
+
+        final userTaskRef =
+            _db.collection('users').doc(live.userId).collection('tasks').doc(live.taskId);
+        batch.update(userTaskRef, {
+          'awardedCompletion': false,
+          'status': 'in_progress',
+        });
+
+        final userRef = _db.collection('users').doc(live.userId);
+        batch.set(
+          userRef,
+          {'ecoPoints': FieldValue.increment(-live.completionPoints)},
+          SetOptions(merge: true),
+        );
+
+        await batch.commit();
+      }
+    }
 
     final last = cur - 1 >= 0 ? _order[cur - 1] : 'pending';
     final updates = <String, dynamic>{
@@ -223,6 +286,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
     } else if (key == 'completed') {
       updates['status'] = 'in_progress';
     }
+
     await ref.update(updates);
   }
 
@@ -286,6 +350,10 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                 SectionCard(child: RequesterInfo(userId: t.userId)),
                 SizedBox(height: 12.h),
 
+                // Details (address, coords, waste chips, size, urgency, notes)
+                SectionCard(child: TaskDetailsSummary(task: t)),
+                SizedBox(height: 12.h),
+
                 // QR (blurred until atLocation)
                 SectionCard(child: QrSection(qrData: t.qrCodeData, unlocked: atLocation)),
                 SizedBox(height: 12.h),
@@ -320,7 +388,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                   ),
                 SizedBox(height: 8.h),
 
-                // Map with real route (your existing widget)
+                // Map with real route (existing widget)
                 if (t.lat != null && t.lng != null)
                   SectionCard(
                     child: JobMiniMap(
