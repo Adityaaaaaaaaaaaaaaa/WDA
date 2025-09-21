@@ -1,6 +1,5 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -16,16 +15,13 @@ import 'widgets/dJobsDetail_widget.dart';
 
 class DJobDetailPage extends StatefulWidget {
   final TaskModel? task;
-  final String? taskId; // fallback when we only know the id
+  final String? taskId; // if you navigate with only an id
 
   const DJobDetailPage({
     super.key,
     this.task,
     this.taskId,
-  }) : assert(
-          task != null || taskId != null,
-          'Pass either a TaskModel via extra or a taskId.',
-        );
+  }) : assert(task != null || taskId != null, 'Pass TaskModel via extra or a taskId.');
 
   @override
   State<DJobDetailPage> createState() => _DJobDetailPageState();
@@ -35,21 +31,21 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
   final _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  // --- scrolling stability
+  // scroll stability
   late final ScrollController _scrollCtrl;
   PageStorageKey<String>? _scrollKey;
 
-  // --- location
+  // location
   LatLng? _me;
   StreamSubscription<Position>? _posSub;
   bool _gpsEnabled = true;
   LocationPermission _perm = LocationPermission.denied;
   DateTime _lastLocTick = DateTime.fromMillisecondsSinceEpoch(0);
-  final _distance = Distance();
-  static const _minMeters = 20.0; // throttle movement
-  static const _minMillis = 2000; // throttle time
+  final _distance = const Distance();
+  static const _minMeters = 20.0;
+  static const _minMillis = 2000;
 
-  // progress order (accepted auto-sets enRoute on accept)
+  // progress order
   static const _order = ['accepted', 'enRoute', 'atLocation', 'atLandfill', 'completed'];
 
   @override
@@ -73,8 +69,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
     super.dispose();
   }
 
-  // --- Location flow ---------------------------------------------------------
-
+  // --- location handling
   Future<void> _bootstrapLocation() async {
     try {
       _gpsEnabled = await Geolocator.isLocationServiceEnabled();
@@ -83,14 +78,12 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
         _perm = await Geolocator.requestPermission();
       }
       if (!_gpsEnabled || _perm == LocationPermission.denied || _perm == LocationPermission.deniedForever) {
-        if (mounted) setState(() {}); // show banner
+        if (mounted) setState(() {});
         return;
       }
-      // seed
       final cur = await Geolocator.getCurrentPosition();
       _me = LatLng(cur.latitude, cur.longitude);
       if (mounted) setState(() {});
-      // stream with throttling
       _posSub = Geolocator.getPositionStream(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.best, distanceFilter: 5),
       ).listen((pos) {
@@ -99,15 +92,14 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
         final movedFar = _me == null
             ? true
             : _distance(_me!, LatLng(pos.latitude, pos.longitude)) > _minMeters;
-
         if (!tooSoon && movedFar) {
           _lastLocTick = now;
           _me = LatLng(pos.latitude, pos.longitude);
-          if (mounted) setState(() {}); // only when it matters
+          if (mounted) setState(() {}); // redraw route only when it matters
         }
       });
     } catch (_) {
-      if (mounted) setState(() {}); // keep banner
+      if (mounted) setState(() {});
     }
   }
 
@@ -119,7 +111,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
       } else {
         var p = await Geolocator.checkPermission();
         if (p == LocationPermission.denied) {
-          p = await Geolocator.requestPermission();
+          await Geolocator.requestPermission();
         }
       }
     } finally {
@@ -135,15 +127,11 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
     return -1;
   }
 
-  // --- Actions ---------------------------------------------------------------
-
+  // --- actions
   Future<void> _accept(TaskModel t) async {
     final user = _auth.currentUser;
     if (user == null) return;
-
-    final ref = _db.collection('tasks').doc(t.taskId);
-
-    await ref.update({
+    await _db.collection('tasks').doc(t.taskId).update({
       'driverAssigned': true,
       'driverId': user.uid,
       'driverName': user.displayName,
@@ -157,8 +145,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
   }
 
   Future<void> _abort(TaskModel t) async {
-    final ref = _db.collection('tasks').doc(t.taskId);
-    await ref.update({
+    await _db.collection('tasks').doc(t.taskId).update({
       'driverAssigned': false,
       'driverId': null,
       'driverName': null,
@@ -236,7 +223,6 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
     } else if (key == 'completed') {
       updates['status'] = 'in_progress';
     }
-
     await ref.update(updates);
   }
 
@@ -250,13 +236,9 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: _db.collection('tasks').doc(effectiveTaskId).snapshots(),
         builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final data = snap.data?.data();
-          if (data == null) {
-            return const Center(child: Text('Task not found'));
-          }
+          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+          final data = snap.data!.data();
+          if (data == null) return const Center(child: Text('Task not found'));
 
           final t = TaskModel.fromMap(data);
           final me = _auth.currentUser?.uid;
@@ -268,13 +250,8 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
           final whenText = when != null
               ? "${when.day}/${when.month}/${when.year} • ${when.hour.toString().padLeft(2, '0')}:${when.minute.toString().padLeft(2, '0')}"
               : "Flexible";
-          final coordsText = (t.lat != null && t.lng != null)
-              ? " (${t.lat!.toStringAsFixed(2)}, ${t.lng!.toStringAsFixed(2)})"
-              : "";
-
-          final showLocBanner = (t.lat != null && t.lng != null);
-          final granted = _gpsEnabled && _perm != LocationPermission.denied && _perm != LocationPermission.deniedForever;
-          final active = granted && _me != null;
+          final coordsText =
+              (t.lat != null && t.lng != null) ? " (${t.lat!.toStringAsFixed(2)}, ${t.lng!.toStringAsFixed(2)})" : "";
 
           return SingleChildScrollView(
             key: _scrollKey,
@@ -283,7 +260,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ----- Header
+                // Header
                 SectionCard(
                   child: JobHeader(
                     title: t.wasteTypes.isNotEmpty ? t.wasteTypes.first : "Waste Pickup",
@@ -301,35 +278,50 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                 ),
                 SizedBox(height: 12.h),
 
-                // ----- Requester
-                SectionCard(child: const RequesterInfo.fromStream()), // unchanged behavior
+                // Requester
+                SectionCard(child: RequesterInfo(userId: t.userId)),
                 SizedBox(height: 12.h),
 
-                // ----- QR
+                // QR
                 SectionCard(child: QrSection(qrData: t.qrCodeData)),
                 SizedBox(height: 12.h),
 
-                // ----- Location banner (Enable / Active)
-                if (showLocBanner)
-                  LocationBanner(
-                    isGranted: granted,
-                    isActive: active,
-                    onEnable: _promptEnableLocation,
+                // Location CTA (only if we can’t draw route)
+                if ((t.lat != null && t.lng != null) &&
+                    (_me == null || !_gpsEnabled || _perm == LocationPermission.denied || _perm == LocationPermission.deniedForever))
+                  SectionCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.my_location_rounded, color: Color(0xFF2563EB)),
+                        SizedBox(width: 10.w),
+                        Expanded(
+                          child: Text(
+                            _gpsEnabled && _perm != LocationPermission.denied && _perm != LocationPermission.deniedForever
+                                ? 'Location enabled'
+                                : 'Turn on location to show road navigation.',
+                            style: TextStyle(fontSize: 12.sp),
+                          ),
+                        ),
+                        if (!(_gpsEnabled && _perm != LocationPermission.denied && _perm != LocationPermission.deniedForever))
+                          TextButton(onPressed: _promptEnableLocation, child: const Text('Enable')),
+                      ],
+                    ),
                   ),
-                if (showLocBanner) SizedBox(height: 8.h),
+                SizedBox(height: 8.h),
 
-                // ----- Map (bigger, dashed route)
+                // Map with real route
                 if (t.lat != null && t.lng != null)
                   SectionCard(
                     child: JobMiniMap(
+                      key: ValueKey('map_${t.taskId}_${_me?.latitude}_${_me?.longitude}'),
                       target: LatLng(t.lat!, t.lng!),
-                      me: _me,        // when set, the dashed line shows
+                      me: _me,
                       height: 260.h,
                     ),
                   ),
                 SizedBox(height: 12.h),
 
-                // ----- Progress (view-only until accepted & mine; locked if completed)
+                // Progress
                 SectionCard(
                   child: ProgressTimeline(
                     stages: Map<String, dynamic>.from(t.progressStages),
@@ -338,10 +330,9 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                     onNext: () => _next(t),
                   ),
                 ),
-
                 SizedBox(height: 12.h),
 
-                // ----- Action bar (Accept ↔ Abort)
+                // Accept ↔ Abort
                 if (!completed)
                   SectionCard(
                     child: DriverActionBar(

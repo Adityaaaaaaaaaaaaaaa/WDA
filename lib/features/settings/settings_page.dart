@@ -100,10 +100,10 @@ class _SettingsAppBarState extends State<SettingsAppBar> {
                   ),
                 ),
                 // Settings button -> stays consistent (pushes to this page)
-                IconButton(
-                  icon: const Icon(Icons.settings, color: Colors.black87),
-                  onPressed: () => context.go('/settings'),
-                ),
+                // IconButton(
+                //   icon: const Icon(Icons.settings, color: Colors.black87),
+                //   onPressed: () => context.go('/settings'),
+                // ),
               ],
             ),
           ),

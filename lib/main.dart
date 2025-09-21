@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -41,16 +40,7 @@ Future<void> main() async {
     persistenceEnabled: true,
   );
   await GoogleSignIn.instance.initialize();
-  try {
-    if (await File('.env').exists()) {
-      await dotenv.load(fileName: ".env");
-      debugPrint("\x1B[32m[dotenv] .env file loaded successfully\x1B[0m");
-    } else {
-      debugPrint("\x1B[33m[dotenv] .env file not found, skipping...\x1B[0m");
-    }
-  } catch (e) {
-    debugPrint("\x1B[31m[dotenv] Failed to load .env: $e\x1B[0m");
-  }
+  await dotenv.load(fileName: ".env");
   debugPrint = (String? message, {int? wrapWidth}) {};
   runApp(const ProviderScope(child: MyApp()));
     WidgetsBinding.instance.addPostFrameCallback((_) {
