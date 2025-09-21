@@ -14,12 +14,12 @@ class MapSpotsService {
   Future<void> createSpot({
     required double lat,
     required double lng,
-    required List<String> types,       // CHANGED
-    required String address,           // NEW
+    required List<String> types,
+    required String address,
     String? description,
     String? createdByName,
-    int? approxQty,                    // NEW
-    String? accessNotes,               // NEW
+    int? approxQty,
+    String? accessNotes,
   }) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) throw Exception('Not logged in');

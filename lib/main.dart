@@ -13,6 +13,7 @@ import 'features/auth/signin_page.dart';
 import 'features/driver/home/dHome_page.dart';
 import 'features/driver/jobs/dJobs_page.dart';
 import 'features/driver/jobs/dJobsDetail_page.dart';
+import 'features/driver/map/dMap_page.dart';
 import 'features/onboarding/onboarding.dart';
 import 'features/setup/driverSetup_page.dart';
 import 'features/setup/userSetup_page.dart';
@@ -137,6 +138,10 @@ final GoRouter _router = GoRouter(
           body: Center(child: Text('Missing task for /dJobDetail')),
         );
       },
+    ),
+    GoRoute(
+      path: '/dMap', 
+      builder: (context, state) => const DMapPage(),
     ),
   ],
 );
