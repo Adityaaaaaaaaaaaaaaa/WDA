@@ -12,6 +12,8 @@ class StatusChipTheme {
       case "pending":     return const Color(0xFFF59E0B);
       case "in_progress": return const Color(0xFF3B82F6);
       case "completed":   return const Color(0xFF10B981);
+      case "cancelled":   return const Color(0xFFEF4444);
+      case "scheduled":   return const Color(0xFF8B5CF6);
       default:            return const Color(0xFF64748B);
     }
   }
