@@ -360,25 +360,32 @@ class _FabGlass extends StatelessWidget {
 
 class CrosshairOverlay extends StatelessWidget {
   const CrosshairOverlay({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(width: 34.w, height: 34.w, child: CustomPaint(painter: _CrosshairPainter()));
+    return SizedBox(
+      width: 34.w,
+      height: 34.w,
+      child: CustomPaint(painter: _CrosshairPainter()),
+    );
   }
 }
 
 class _CrosshairPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = DColors.warn
+    final paint = Paint()
+      ..color = Colors.red
       ..strokeWidth = 2.5
       ..style = PaintingStyle.stroke;
+
     final c = Offset(size.width / 2, size.height / 2);
     final r = size.width / 2 - 2;
-    canvas.drawCircle(c, r, p);
+
+    canvas.drawCircle(c, r, paint);
     final line = r * 0.6;
-    canvas.drawLine(Offset(c.dx - line, c.dy), Offset(c.dx + line, c.dy), p);
-    canvas.drawLine(Offset(c.dx, c.dy - line), Offset(c.dx, c.dy + line), p);
+    canvas.drawLine(Offset(c.dx - line, c.dy), Offset(c.dx + line, c.dy), paint);
+    canvas.drawLine(Offset(c.dx, c.dy - line), Offset(c.dx, c.dy + line), paint);
   }
 
   @override
@@ -406,6 +413,7 @@ class HintToast extends StatefulWidget {
 class _HintToastState extends State<HintToast> with SingleTickerProviderStateMixin {
   late AnimationController _c;
   late Animation<double> _slide, _fade;
+
   @override
   void initState() {
     super.initState();
@@ -440,39 +448,69 @@ class _HintToastState extends State<HintToast> with SingleTickerProviderStateMix
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: 4.w),
               padding: EdgeInsets.all(16.w),
-              decoration: modernCard(color: DColors.primary.withOpacity(0.95), elevation: 4, radius: 16),
-              child: Row(
+              decoration: modernCard(
+                color: DColors.primary.withOpacity(0.95),
+                elevation: 4,
+                radius: 16,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 32.w,
-                    height: 32.w,
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16.r)),
-                    child: Icon(Icons.touch_app_rounded, color: Colors.white, size: 18.sp),
-                  ),
-                  SizedBox(width: 12.w),
-                  Expanded(
-                    child: Text(
-                      widget.text,
-                      style: TextStyle(color: Colors.white, fontSize: 13.sp, fontWeight: FontWeight.w600, height: 1.3),
-                    ),
-                  ),
-                  if (widget.primaryActionText != null && widget.onPrimaryAction != null) ...[
-                    SizedBox(width: 8.w),
-                    TextButton(
-                      onPressed: widget.onPrimaryAction,
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: DColors.primary,
-                        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                  // Header row: icon + text + close
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 32.w,
+                        height: 32.w,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(16.r),
+                        ),
+                        child: Icon(Icons.touch_app_rounded, color: Colors.white, size: 18.sp),
                       ),
-                      child: Text(widget.primaryActionText!, style: const TextStyle(fontWeight: FontWeight.w800)),
+                      SizedBox(width: 12.w),
+                      Expanded(
+                        child: Text(
+                          widget.text,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13.sp,
+                            fontWeight: FontWeight.w600,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 8.w),
+                      IconButton(
+                        onPressed: widget.onDismiss,
+                        icon: Icon(Icons.close_rounded, color: Colors.white.withOpacity(0.85), size: 18.sp),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+
+                  // Action button on a NEW line (optional)
+                  if (widget.primaryActionText != null && widget.onPrimaryAction != null) ...[
+                    SizedBox(height: 10.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: TextButton(
+                        onPressed: widget.onPrimaryAction,
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: DColors.primary,
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+                        ),
+                        child: Text(
+                          widget.primaryActionText!,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
                     ),
                   ],
-                  IconButton(
-                    onPressed: widget.onDismiss,
-                    icon: Icon(Icons.close_rounded, color: Colors.white.withOpacity(0.85), size: 18.sp),
-                  ),
                 ],
               ),
             ),

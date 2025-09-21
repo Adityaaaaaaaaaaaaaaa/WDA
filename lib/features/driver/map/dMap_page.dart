@@ -161,19 +161,28 @@ class _DMapPageState extends State<DMapPage> with WidgetsBindingObserver {
     }
   }
 
-  static double _radiusKmForZoom(double zoom) {
-    if (zoom >= 17) return 1.2;
-    if (zoom >= 15) return 3.5;
-    if (zoom >= 13) return 6.0;
-    if (zoom >= 11) return 10.0;
-    if (zoom >= 9)  return 18.0;
-    return 25.0;
+  // In UMapsPage and DMapPage
+  static double _radiusKmForZoom(double z) {
+    if (z >= 18) return 0.8;
+    if (z >= 17) return 1.5;
+    if (z >= 16) return 3.0;
+    if (z >= 15) return 5.5;
+    if (z >= 14) return 8.0;
+    if (z >= 13) return 15.0;
+    if (z >= 12) return 25.0;
+    if (z >= 11) return 40.0;
+    if (z >= 10) return 60.0;  // was ~18–25 before — too small
+    if (z >= 9)  return 90.0;  // cover most of the island
+    return 140.0;              // very zoomed out → whole island
   }
 
   void _listenAround(LatLng center) {
     _sub?.cancel();
     _lastQueryCenter = center;
-    final radiusKm = _radiusKmForZoom(_zoom);
+    //final radiusKm = _radiusKmForZoom(_zoom);
+
+    var radiusKm = _radiusKmForZoom(_zoom);
+    if (_zoom <= 9) radiusKm = 120; // hard cap: whole island
 
     _sub = _svc
         .spotsAround(lat: center.latitude, lng: center.longitude, radiusKm: radiusKm)
@@ -413,7 +422,7 @@ class _DMapPageState extends State<DMapPage> with WidgetsBindingObserver {
                             right: 16.w,
                             bottom: 80.h,
                             child: HintToast(
-                              text: "Tap a pin to view details. Mark it cleaned after action.",
+                              text: "Tap a pin to view details & actions.",
                               primaryActionText: _needsLocationPermission ? "Enable location" : "Center on me",
                               onPrimaryAction: _needsLocationPermission ? _promptForLocationPermission : _goToMyLocation,
                               onDismiss: _hideHint,
