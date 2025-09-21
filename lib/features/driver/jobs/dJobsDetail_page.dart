@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:async';
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -89,9 +90,8 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
       ).listen((pos) {
         final now = DateTime.now();
         final tooSoon = now.difference(_lastLocTick).inMilliseconds < _minMillis;
-        final movedFar = _me == null
-            ? true
-            : _distance(_me!, LatLng(pos.latitude, pos.longitude)) > _minMeters;
+        final movedFar =
+            _me == null ? true : _distance(_me!, LatLng(pos.latitude, pos.longitude)) > _minMeters;
         if (!tooSoon && movedFar) {
           _lastLocTick = now;
           _me = LatLng(pos.latitude, pos.longitude);
@@ -243,8 +243,10 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
           final t = TaskModel.fromMap(data);
           final me = _auth.currentUser?.uid;
           final isMine = (t.driverId == null) || (t.driverId == me);
-          final accepted = (t.progressStages['accepted'] ?? false) == true;
+          final stages = Map<String, dynamic>.from(t.progressStages);
+          final accepted = (stages['accepted'] ?? false) == true;
           final completed = t.status == 'completed';
+          final atLocation = (stages['atLocation'] ?? false) == true;
 
           final when = t.pickupDateTime;
           final whenText = when != null
@@ -267,9 +269,11 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                     jobId: t.taskId.split('_').last,
                     statusBadge: completed
                         ? const StatusBadge(color: Color(0xFF16A34A), bg: Color(0xFFD1FAE5), label: 'Completed')
-                        : (accepted
-                            ? const StatusBadge(color: Color(0xFF2563EB), bg: Color(0xFFDBEAFE), label: 'In Progress')
-                            : const StatusBadge(color: Color(0xFFF59E0B), bg: Color(0xFFFEF3C7), label: 'Available')),
+                        : (t.status == 'scheduled'
+                            ? const StatusBadge(color: Color(0xFFF59E0B), bg: Color(0xFFFEF3C7), label: 'Scheduled')
+                            : (accepted
+                                ? const StatusBadge(color: Color(0xFF2563EB), bg: Color(0xFFDBEAFE), label: 'In Progress')
+                                : const StatusBadge(color: Color(0xFF0369A1), bg: Color(0xFFE0F2FE), label: 'Available'))),
                     rows: [
                       HeaderRow(icon: Icons.access_time_rounded, text: whenText),
                       HeaderRow(icon: Icons.place_rounded, text: t.address + coordsText),
@@ -282,13 +286,16 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                 SectionCard(child: RequesterInfo(userId: t.userId)),
                 SizedBox(height: 12.h),
 
-                // QR
-                SectionCard(child: QrSection(qrData: t.qrCodeData)),
+                // QR (blurred until atLocation)
+                SectionCard(child: QrSection(qrData: t.qrCodeData, unlocked: atLocation)),
                 SizedBox(height: 12.h),
 
                 // Location CTA (only if we can’t draw route)
                 if ((t.lat != null && t.lng != null) &&
-                    (_me == null || !_gpsEnabled || _perm == LocationPermission.denied || _perm == LocationPermission.deniedForever))
+                    (_me == null ||
+                        !_gpsEnabled ||
+                        _perm == LocationPermission.denied ||
+                        _perm == LocationPermission.deniedForever))
                   SectionCard(
                     child: Row(
                       children: [
@@ -296,20 +303,24 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                         SizedBox(width: 10.w),
                         Expanded(
                           child: Text(
-                            _gpsEnabled && _perm != LocationPermission.denied && _perm != LocationPermission.deniedForever
+                            _gpsEnabled &&
+                                    _perm != LocationPermission.denied &&
+                                    _perm != LocationPermission.deniedForever
                                 ? 'Location enabled'
                                 : 'Turn on location to show road navigation.',
                             style: TextStyle(fontSize: 12.sp),
                           ),
                         ),
-                        if (!(_gpsEnabled && _perm != LocationPermission.denied && _perm != LocationPermission.deniedForever))
+                        if (!(_gpsEnabled &&
+                            _perm != LocationPermission.denied &&
+                            _perm != LocationPermission.deniedForever))
                           TextButton(onPressed: _promptEnableLocation, child: const Text('Enable')),
                       ],
                     ),
                   ),
                 SizedBox(height: 8.h),
 
-                // Map with real route
+                // Map with real route (your existing widget)
                 if (t.lat != null && t.lng != null)
                   SectionCard(
                     child: JobMiniMap(
@@ -321,10 +332,10 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                   ),
                 SizedBox(height: 12.h),
 
-                // Progress
+                // Progress (enhanced visuals)
                 SectionCard(
                   child: ProgressTimeline(
-                    stages: Map<String, dynamic>.from(t.progressStages),
+                    stages: stages,
                     editable: accepted && isMine && !completed,
                     onUndo: () => _undo(t),
                     onNext: () => _next(t),
@@ -332,14 +343,17 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                 ),
                 SizedBox(height: 12.h),
 
-                // Accept ↔ Abort
+                // Accept ↔ Abort (Abort has confirmation glass dialog)
                 if (!completed)
                   SectionCard(
                     child: DriverActionBar(
                       isMine: isMine,
                       accepted: accepted,
                       onAccept: () => _accept(t),
-                      onAbort: () => _abort(t),
+                      onAbort: () async {
+                        final ok = await showAbortConfirm(context, t);
+                        if (ok == true) await _abort(t);
+                      },
                     ),
                   ),
 
@@ -363,4 +377,75 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
       ),
     );
   }
+}
+
+// nice glassy abort confirm
+Future<bool?> showAbortConfirm(BuildContext context, TaskModel t) {
+  return showDialog<bool>(
+    context: context,
+    barrierColor: Colors.black.withOpacity(.35),
+    builder: (_) {
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.all(20.w),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20.r),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.85),
+                borderRadius: BorderRadius.circular(20.r),
+                border: Border.all(color: Colors.white.withOpacity(.6)),
+              ),
+              padding: EdgeInsets.all(18.w),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.warning_amber_rounded, size: 42.sp, color: const Color(0xFFF59E0B)),
+                  SizedBox(height: 10.h),
+                  Text('Abort this job?',
+                      style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800)),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'This will reset driver details and progress for\nJob #${t.taskId.split('_').last.substring(0, 6)}.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12.sp, color: Colors.black54),
+                  ),
+                  SizedBox(height: 14.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          ),
+                          child: const Text('No'),
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade600,
+                            padding: EdgeInsets.symmetric(vertical: 12.h),
+                            shape:
+                                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          ),
+                          child: const Text('Abort', style: TextStyle(color: Colors.white)),
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
 }

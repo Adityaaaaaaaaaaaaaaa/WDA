@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 import 'dart:async';
+import 'dart:ui' show ImageFilter; // for blur/glass + QR blur
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -64,8 +65,30 @@ class JobHeader extends StatelessWidget {
   final Widget statusBadge;
   final List<HeaderRow> rows;
 
+  String _prettyId(String raw) {
+    final short = raw.length > 6 ? raw.substring(0, 6) : raw;
+    return '#$short'; // compact pill
+  }
+
   @override
   Widget build(BuildContext context) {
+    final jobPill = Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Text(_prettyId(jobId),
+          style: TextStyle(
+            fontSize: 11.sp,
+            letterSpacing: .3,
+            fontFeatures: const [FontFeature.tabularFigures()],
+            color: const Color(0xFF334155),
+            fontWeight: FontWeight.w700,
+          )),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -86,7 +109,8 @@ class JobHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800)),
-                  Text('Job ID: $jobId', style: TextStyle(fontSize: 12.sp, color: Colors.grey[600])),
+                  SizedBox(height: 4.h),
+                  jobPill,
                 ],
               ),
             ),
@@ -122,15 +146,30 @@ class RequesterInfo extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(name, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14.sp)),
-                  SizedBox(height: 2.h),
-                  Text(phone, style: TextStyle(fontSize: 12.sp, color: Colors.black54)),
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      const Icon(Icons.phone_rounded, size: 16, color: Color(0xFF2563EB)),
+                      SizedBox(width: 6.w),
+                      Expanded(
+                        child: Text(
+                          phone,
+                          style: TextStyle(fontSize: 12.sp, color: Colors.black87),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-            IconButton(
-              onPressed: () => Clipboard.setData(ClipboardData(text: phone)),
-              icon: const Icon(Icons.copy_rounded, color: Colors.grey),
-              tooltip: 'Copy phone',
+            Tooltip(
+              message: 'Copy phone',
+              child: IconButton(
+                onPressed: () => Clipboard.setData(ClipboardData(text: phone)),
+                icon: const Icon(Icons.copy_rounded, color: Colors.grey),
+              ),
             ),
           ],
         );
@@ -139,11 +178,12 @@ class RequesterInfo extends StatelessWidget {
   }
 }
 
-/// ---------- QR (round modules) ----------
+/// ---------- QR (round modules) with lock/blur until atLocation ----------
 
 class QrSection extends StatelessWidget {
-  const QrSection({super.key, required this.qrData});
+  const QrSection({super.key, required this.qrData, this.unlocked = false});
   final String qrData;
+  final bool unlocked;
 
   @override
   Widget build(BuildContext context) {
@@ -163,18 +203,66 @@ class QrSection extends StatelessWidget {
           ),
           SizedBox(width: 10.w),
           Text('Pickup QR Code', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.sp)),
+          const Spacer(),
+          if (!unlocked)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.lock_rounded, size: 14, color: Color(0xFFB45309)),
+                  SizedBox(width: 4.w),
+                  Text('Locked', style: TextStyle(fontSize: 11.sp, color: const Color(0xFFB45309))),
+                ],
+              ),
+            ),
         ]),
         SizedBox(height: 12.h),
         Center(
-          child: Container(
-            padding: EdgeInsets.all(18.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
-              border: Border.all(color: const Color(0xFFF1F5F9), width: 1.4),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(.04), blurRadius: 10, offset: const Offset(0, 4))],
-            ),
-            child: has ? _RoundQr(data: qrData) : _qrPlaceholder(),
+          child: Stack(
+            children: [
+              Container(
+                padding: EdgeInsets.all(18.w),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16.r),
+                  border: Border.all(color: const Color(0xFFF1F5F9), width: 1.4),
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(.04), blurRadius: 10, offset: const Offset(0, 4))],
+                ),
+                child: has ? _RoundQr(data: qrData) : _qrPlaceholder(),
+              ),
+              if (!unlocked)
+                Positioned.fill(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16.r),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                      child: Container(
+                        color: Colors.white.withOpacity(0.15),
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.info_outline_rounded, color: Colors.red, size: 32.sp),
+                            SizedBox(height: 6.h),
+                            Text(
+                              'QR visible at pickup',
+                              style: TextStyle(fontSize: 15.sp, color: Colors.red, fontWeight: FontWeight.w900),
+                            ),
+                            Text(
+                              '(when "At pickup" is active)',
+                              style: TextStyle(fontSize: 13.sp, color: Colors.red, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
@@ -211,7 +299,6 @@ class _RoundQr extends StatelessWidget {
 
 /// ---------- Road route mini map (Google Routes API -> flutter_map polyline) ----------
 
-/// ---------- Road route mini map (Google Routes API -> flutter_map polyline) ----------
 class JobMiniMap extends StatefulWidget {
   const JobMiniMap({
     super.key,
@@ -270,7 +357,6 @@ class _JobMiniMapState extends State<JobMiniMap> {
 
     final apiKey = dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '';
     if (apiKey.isEmpty) {
-      // No key -> we can only show the straight dashed fallback
       if (mounted) setState(() => _route = const []);
       return;
     }
@@ -298,7 +384,6 @@ class _JobMiniMapState extends State<JobMiniMap> {
           .map((p) => LatLng(p.latitude, p.longitude))
           .toList(growable: false);
     } catch (_) {
-      // ignore; we'll try legacy next
       decoded = const [];
     }
 
@@ -389,7 +474,7 @@ class _JobMiniMapState extends State<JobMiniMap> {
   }
 }
 
-/// ---------- Vertical progress timeline ----------
+/// ---------- Vertical progress timeline (enhanced) ----------
 
 class ProgressTimeline extends StatelessWidget {
   const ProgressTimeline({
@@ -405,46 +490,83 @@ class ProgressTimeline extends StatelessWidget {
   final VoidCallback onUndo;
   final VoidCallback onNext;
 
+  static const _items = [
+    ['accepted', 'Accepted'],
+    ['enRoute', 'En route'],
+    ['atLocation', 'At pickup'],
+    ['atLandfill', 'At landfill'],
+    ['completed', 'Completed'],
+  ];
+
+  int _currentIdx() {
+    for (int i = _items.length - 1; i >= 0; i--) {
+      if ((stages[_items[i][0]] ?? false) == true) return i;
+    }
+    return -1;
+  }
+
   @override
   Widget build(BuildContext context) {
-    const items = [
-      ['accepted', 'Accepted'],
-      ['enRoute', 'En route'],
-      ['atLocation', 'At pickup'],
-      ['atLandfill', 'At landfill'],
-      ['completed', 'Completed'],
-    ];
+    final cur = _currentIdx();
 
-    Widget dot(bool done) => Container(
-          width: 18, height: 18,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: done ? Colors.green : Colors.white,
-            border: Border.all(color: done ? Colors.green : const Color(0xFFCBD5E1)),
-          ),
-          child: done ? const Icon(Icons.check, color: Colors.white, size: 12) : null,
+    Widget dot(int i) {
+      final done = (stages[_items[i][0]] ?? false) == true;
+      final active = i == cur + 1 && !done; // the next actionable step
+      final color = done
+          ? const Color(0xFF10B981)
+          : (active ? const Color(0xFF2563EB) : const Color(0xFFCBD5E1));
+
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        width: active ? 22 : 18,
+        height: active ? 22 : 18,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: done ? color : Colors.white,
+          border: Border.all(color: color, width: active ? 2 : 1.2),
+        ),
+        child: done ? const Icon(Icons.check, color: Colors.white, size: 12) : null,
+      );
+    }
+
+    Widget line(bool passed) => Container(
+          height: 22.h,
+          width: 2,
+          color: passed ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
         );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Task Progress', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w800)),
-        SizedBox(height: 10.h),
+        SizedBox(height: 12.h),
         Column(
           children: [
-            for (var i = 0; i < items.length; i++) ...[
+            for (var i = 0; i < _items.length; i++) ...[
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  dot((stages[items[i][0]] ?? false) == true),
+                  dot(i),
                   SizedBox(width: 12.w),
-                  Expanded(child: Text(items[i][1], style: TextStyle(fontSize: 13.sp))),
+                  Expanded(
+                    child: Text(
+                      _items[i][1],
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        fontWeight: (stages[_items[i][0]] ?? false) ? FontWeight.w700 : FontWeight.w500,
+                        color: (stages[_items[i][0]] ?? false)
+                            ? const Color(0xFF0F766E)
+                            : const Color(0xFF1F2937),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              if (i != items.length - 1)
+              if (i != _items.length - 1)
                 Padding(
-                  padding: EdgeInsets.only(left: 8.w),
-                  child: Container(height: 20.h, width: 2, color: const Color(0xFFE2E8F0)),
+                  padding: EdgeInsets.only(left: 9.w),
+                  child: line((stages[_items[i][0]] ?? false) == true),
                 ),
             ]
           ],
@@ -509,11 +631,12 @@ class DriverActionBar extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
           padding: EdgeInsets.symmetric(vertical: 14.h),
         ),
-        child: const Text('Accept Job', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        child:
+            const Text('Accept Job', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
       );
     }
     return OutlinedButton.icon(
-      onPressed: onAbort,
+      onPressed: onAbort, // dialog handled in page (keeps this widget simple)
       icon: const Icon(Icons.cancel),
       label: const Text('Abort Job'),
       style: OutlinedButton.styleFrom(
