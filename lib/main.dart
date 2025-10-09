@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:wda/features/user/profile/pages/u_profile_page.dart';
 import 'config/firebase_options.dart';
 import 'config/performance.dart';
 import 'features/auth/signin_page.dart';
@@ -24,6 +23,8 @@ import 'features/setup/user_role_page.dart';
 import 'features/splash/splash_screen.dart';
 import 'features/user/home/uHome_page.dart';
 import 'features/user/map/uMaps_page.dart';
+import 'features/user/profile/achievements_page.dart';
+import 'features/user/profile/uProfile_page.dart';
 import 'features/user/request/uRequest_page.dart';
 import 'features/settings/settings_page.dart';
 import 'features/user/tasks/uTaskDetails_page.dart';
@@ -158,6 +159,10 @@ final GoRouter _router = GoRouter(
       path: '/uProfile',
       builder: (context, state) => const UProfilePage(),
     ),
+    GoRoute(
+      path: '/achievements',
+      builder: (context, state) => const AchievementsPage(),
+    )
   ],
 );
 
