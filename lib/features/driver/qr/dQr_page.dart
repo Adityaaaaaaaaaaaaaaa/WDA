@@ -88,6 +88,7 @@ class _DQrPageState extends State<DQrPage> {
 
           return ListView(
             padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
+            cacheExtent: MediaQuery.of(context).size.height,
             children: [
               JobChip(task: task),
               SizedBox(height: 12.h),
@@ -181,8 +182,8 @@ class _DQrPageState extends State<DQrPage> {
                   },
                 ),
                 Positioned(
-                  top: 10,
-                  right: 10,
+                  top: 10.h,
+                  right: 10.w,
                   child: IconButton(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close_rounded),
@@ -219,7 +220,10 @@ class _DQrPageState extends State<DQrPage> {
 
   void _toast(BuildContext c, String msg, {bool error = false}) {
     ScaffoldMessenger.of(c).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: error ? Colors.red : Colors.green),
+      SnackBar(
+        content: Text(msg, style: TextStyle(fontSize: 13.sp)),
+        backgroundColor: error ? Colors.red : Colors.green,
+      ),
     );
   }
 }

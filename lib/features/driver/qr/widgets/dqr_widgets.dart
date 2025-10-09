@@ -18,7 +18,7 @@ class EmptyQrState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 72, height: 72,
+              width: 72.w, height: 72.w,
               decoration: BoxDecoration(
                 color: const Color(0xFFE5F2FF),
                 borderRadius: BorderRadius.circular(18.r),
@@ -40,7 +40,7 @@ class EmptyQrState extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                 padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 12.h),
               ),
-              child: const Text('View Jobs', style: TextStyle(color: Colors.white)),
+              child: Text('View Jobs', style: TextStyle(color: Colors.white, fontSize: 13.sp)),
             ),
           ],
         ),
@@ -60,17 +60,17 @@ class JobChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14.r),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))],
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8.r, offset: Offset(0, 3.h))],
       ),
       child: Row(
         children: [
           Container(
-            width: 36, height: 36,
+            width: 36.w, height: 36.w,
             decoration: BoxDecoration(
               color: Colors.green.shade100,
               borderRadius: BorderRadius.circular(10.r),
             ),
-            child: const Icon(Icons.recycling_rounded, color: Colors.green),
+            child: Icon(Icons.recycling_rounded, color: Colors.green, size: 22.sp),
           ),
           SizedBox(width: 10.w),
           Expanded(
@@ -140,7 +140,7 @@ class ScanCardWithQr extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14.r),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))],
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8.r, offset: Offset(0, 3.h))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,7 +152,7 @@ class ScanCardWithQr extends StatelessWidget {
                 color: const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(12.r),
               ),
-              child: Icon(icon, color: const Color(0xFF2563EB)),
+              child: Icon(icon, color: const Color(0xFF2563EB), size: 20.sp),
             ),
             SizedBox(width: 10.w),
             Expanded(
@@ -176,7 +176,7 @@ class ScanCardWithQr extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16.r),
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                        filter: ImageFilter.blur(sigmaX: 8.r, sigmaY: 8.r),
                         child: Container(
                           width: 220.w,
                           height: 220.w,
@@ -185,7 +185,7 @@ class ScanCardWithQr extends StatelessWidget {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.lock_rounded, color: Colors.black54),
+                              Icon(Icons.lock_rounded, color: Colors.black54, size: 22.sp),
                               SizedBox(height: 6.h),
                               Text(lockHint ?? 'Locked',
                                   style: TextStyle(fontSize: 12.sp, color: Colors.black87)),
@@ -214,7 +214,8 @@ class ScanCardWithQr extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                 padding: EdgeInsets.symmetric(vertical: 12.h),
               ),
-              child: Text(primaryLabel, style: const TextStyle(color: Colors.white)),
+              child: Text(primaryLabel,
+                  style: TextStyle(color: Colors.white, fontSize: 13.sp)),
             ),
           ),
         ],
@@ -275,8 +276,8 @@ class _RoundQr extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.4),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(.04), blurRadius: 10, offset: const Offset(0, 4))],
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.4.w),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(.04), blurRadius: 10.r, offset: Offset(0, 4.h))],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12.r),
