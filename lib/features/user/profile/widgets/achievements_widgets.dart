@@ -2,145 +2,186 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class PointsBanner extends StatelessWidget {
-  const PointsBanner({super.key, required this.points});
-  final int points;
+enum Rarity { common, rare, epic, legendary, mythic }
+
+extension RarityX on Rarity {
+  String get label => {
+        Rarity.common: 'Common',
+        Rarity.rare: 'Rare',
+        Rarity.epic: 'Epic',
+        Rarity.legendary: 'Legendary',
+        Rarity.mythic: 'Mythic',
+      }[this]!;
+
+  Color get color => {
+        Rarity.common: const Color(0xFF64748B),     // slate
+        Rarity.rare: const Color(0xFF2563EB),       // blue
+        Rarity.epic: const Color(0xFF7C3AED),       // violet
+        Rarity.legendary: const Color(0xFFF59E0B),  // amber
+        Rarity.mythic: const Color(0xFF10B981),     // emerald
+      }[this]!;
+
+  List<Color> get gradient => switch (this) {
+        Rarity.common => [const Color(0xFFE2E8F0), const Color(0xFFCBD5E1)],
+        Rarity.rare => [const Color(0xFFDBEAFE), const Color(0xFFBFDBFE)],
+        Rarity.epic => [const Color(0xFFEDE9FE), const Color(0xFFD8B4FE)],
+        Rarity.legendary => [const Color(0xFFFEF3C7), const Color(0xFFFDE68A)],
+        Rarity.mythic => [const Color(0xFFD1FAE5), const Color(0xFFA7F3D0)],
+      };
+}
+
+class GlassCard extends StatelessWidget {
+  const GlassCard({
+    super.key,
+    required this.child,
+    this.padding,
+    this.onTap,
+  });
+
+  final Widget child;
+  final EdgeInsets? padding;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final level = _level(points);
-    final nextTarget = level.nextTarget;
-    final progress = nextTarget == null ? 1.0 : (points / nextTarget).clamp(0, 1);
-
-    return Container(
-      padding: EdgeInsets.all(14.w),
+    final body = Container(
+      padding: padding ?? EdgeInsets.all(14.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 18.r,
-                backgroundColor: level.color.withOpacity(.12),
-                child: Icon(Icons.eco_rounded, color: level.color),
-              ),
-              SizedBox(width: 10.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Eco-Points: $points", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.sp)),
-                    Text("Current Level: ${level.label}", style: TextStyle(fontSize: 12.sp, color: Colors.black54)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 10.h),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8.r),
-            child: LinearProgressIndicator(
-              value: progress.toDouble(),
-              minHeight: 8.h,
-              backgroundColor: const Color(0xFFE5E7EB),
-              valueColor: AlwaysStoppedAnimation<Color>(level.color),
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              nextTarget == null ? "Max level reached 🎉" : "${nextTarget - points} to unlock ${level.nextLabel}",
-              style: TextStyle(fontSize: 11.sp, color: Colors.black54),
-            ),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           )
         ],
       ),
+      child: child,
+    );
+
+    if (onTap == null) return body;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16.r),
+      child: body,
     );
   }
-
-  _Level _level(int pts) {
-    if (pts >= 1000) return const _Level('Eco Deity', null, '-', Color(0xFF065F46));
-    if (pts >= 600) return const _Level('Green Hero', 1000, 'Eco Deity', Color(0xFF15803D));
-    if (pts >= 350) return const _Level('Eco Warrior', 600, 'Green Hero', Color(0xFF16A34A));
-    if (pts >= 150) return const _Level('Green Rookie', 350, 'Eco Warrior', Color(0xFF22C55E));
-    return const _Level('Leafling', 150, 'Green Rookie', Color(0xFF34D399));
-  }
 }
 
-class _Level {
-  final String label;
-  final int? nextTarget;
-  final String nextLabel;
-  final Color color;
-  const _Level(this.label, this.nextTarget, this.nextLabel, this.color);
-}
+class SectionHeader extends StatelessWidget {
+  const SectionHeader({
+    super.key,
+    required this.title,
+    this.actionText,
+    this.onAction,
+    this.icon,
+  });
 
-class BadgeGrid extends StatelessWidget {
-  const BadgeGrid({super.key, required this.totalBookings, required this.completedThisWeek});
-  final int totalBookings;
-  final int completedThisWeek;
+  final String title;
+  final String? actionText;
+  final VoidCallback? onAction;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
-    final items = <_Badge>[
-      _Badge(
-        title: "First Booking",
-        desc: "You made your first request",
-        icon: Icons.rocket_launch_rounded,
-        color: const Color(0xFF2563EB),
-        unlocked: totalBookings >= 1,
+    return Padding(
+      padding: EdgeInsets.fromLTRB(4.w, 8.h, 4.w, 8.h),
+      child: Row(
+        children: [
+          if (icon != null)
+            Container(
+              padding: EdgeInsets.all(8.w),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(icon, color: const Color(0xFF2563EB), size: 18.sp),
+            ),
+          if (icon != null) SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w800),
+            ),
+          ),
+          if (actionText != null)
+            TextButton(
+              onPressed: onAction,
+              child: Text(actionText!,
+                  style: TextStyle(
+                      color: const Color(0xFF2563EB),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.sp)),
+            )
+        ],
       ),
-      _Badge(
-        title: "Serial Booker",
-        desc: "5 bookings in total",
-        icon: Icons.local_fire_department_rounded,
-        color: const Color(0xFFEF4444),
-        unlocked: totalBookings >= 5,
-      ),
-      _Badge(
-        title: "Eco Warrior",
-        desc: "10 pickups in total",
-        icon: Icons.eco_rounded,
-        color: const Color(0xFF16A34A),
-        unlocked: totalBookings >= 10,
-      ),
-      _Badge(
-        title: "Clean Freak",
-        desc: "3 bookings this week",
-        icon: Icons.clean_hands_rounded,
-        color: const Color(0xFF10B981),
-        unlocked: completedThisWeek >= 3,
-      ),
-    ];
+    );
+  }
+}
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
-      ),
-      padding: EdgeInsets.all(14.w),
+class TierMeter extends StatelessWidget {
+  const TierMeter({
+    super.key,
+    required this.currentPoints,
+    required this.currentTierLabel,
+    required this.nextTierAt,
+  });
+
+  final int currentPoints;
+  final String currentTierLabel;
+  final int nextTierAt;
+
+  @override
+  Widget build(BuildContext context) {
+    final need = (nextTierAt - currentPoints).clamp(0, nextTierAt);
+    final pct = nextTierAt == 0 ? 1.0 : (currentPoints / nextTierAt).clamp(0, 1).toDouble();
+
+    return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Your Badge Collection", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.sp)),
-          SizedBox(height: 10.h),
-          GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            itemCount: items.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisExtent: 120.h,
-              crossAxisSpacing: 10.w,
-              mainAxisSpacing: 10.h,
-            ),
-            itemBuilder: (_, i) => _BadgeTile(item: items[i]),
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8.w),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Icon(Icons.emoji_events_rounded,
+                    color: const Color(0xFF2563EB), size: 18.sp),
+              ),
+              SizedBox(width: 10.w),
+              Expanded(
+                child: Text(
+                  'Eco-Points: $currentPoints',
+                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w900),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD1FAE5),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+                child: Text(currentTierLabel,
+                    style: TextStyle(
+                        color: const Color(0xFF065F46),
+                        fontSize: 11.sp,
+                        fontWeight: FontWeight.w800)),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          NiceProgressBar(value: pct),
+          SizedBox(height: 8.h),
+          Text(
+            need == 0
+                ? "Maxed for this tier — keep flexing 💅"
+                : "$need more points to hit your next tier",
+            style: TextStyle(fontSize: 12.sp, color: Colors.black54),
           ),
         ],
       ),
@@ -148,104 +189,217 @@ class BadgeGrid extends StatelessWidget {
   }
 }
 
-class _Badge {
+
+class NiceProgressBar extends StatelessWidget {
+  const NiceProgressBar({super.key, required this.value});
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: value.clamp(0, 1)),
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.easeOutCubic,
+      builder: (context, v, _) {
+        return Container(
+          height: 10.h,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(10.r),
+          ),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: v,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF22C55E), Color(0xFF10B981)],
+                  ),
+                  borderRadius: BorderRadius.circular(10.r),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+
+class BadgeSpec {
+  final String id;
   final String title;
-  final String desc;
+  final String description;
+  final Rarity rarity;
   final IconData icon;
-  final Color color;
-  final bool unlocked;
-  const _Badge({
+
+  /// Unlock check. Provide ecoPoints, totals, weekly, etc.
+  final bool Function(int ecoPoints, int totalBookings, int weeklyCompleted) unlocked;
+
+  BadgeSpec({
+    required this.id,
     required this.title,
-    required this.desc,
+    required this.description,
+    required this.rarity,
     required this.icon,
-    required this.color,
     required this.unlocked,
   });
 }
 
-class _BadgeTile extends StatelessWidget {
-  const _BadgeTile({required this.item});
-  final _Badge item;
+class BadgeTile extends StatelessWidget {
+  const BadgeTile({
+    super.key,
+    required this.badge,
+    required this.unlocked,
+    required this.onTap,
+  });
+
+  final BadgeSpec badge;
+  final bool unlocked;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final locked = !item.unlocked;
-    return AnimatedContainer(
+    final g = badge.rarity.gradient;
+    final fg = badge.rarity.color;
+
+    final content = AnimatedOpacity(
+      opacity: unlocked ? 1 : 0.35,
       duration: const Duration(milliseconds: 300),
-      decoration: BoxDecoration(
-        color: locked ? Colors.grey.shade100 : item.color.withOpacity(.1),
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: locked ? Colors.grey.shade300 : item.color.withOpacity(.35)),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 44.w,
+            height: 44.w,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: g),
+              borderRadius: BorderRadius.circular(14.r),
+              boxShadow: [
+                BoxShadow(
+                  color: g.last.withOpacity(.35),
+                  blurRadius: unlocked ? 12 : 5,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Icon(badge.icon, color: fg),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            badge.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w800,
+              color: Colors.black87,
+            ),
+          ),
+          SizedBox(height: 2.h),
+          Text(badge.rarity.label,
+              style: TextStyle(fontSize: 10.sp, color: fg, fontWeight: FontWeight.w700)),
+        ],
       ),
-      padding: EdgeInsets.all(12.w),
-      child: Opacity(
-        opacity: locked ? 0.55 : 1,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(radius: 16.r, backgroundColor: item.color.withOpacity(.15), child: Icon(item.icon, color: item.color, size: 18)),
-            SizedBox(height: 6.h),
-            Text(item.title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12.sp)),
-            SizedBox(height: 4.h),
-            Text(item.desc, style: TextStyle(fontSize: 11.sp, color: Colors.black54)),
-          ],
-        ),
+    );
+
+    return GlassCard(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 12.h),
+      onTap: onTap,
+      child: Stack(
+        children: [
+          Center(child: content),
+          if (!unlocked)
+            Positioned(
+              right: 4, top: 4,
+              child: Icon(Icons.lock_rounded, size: 14.sp, color: Colors.black26),
+            ),
+        ],
       ),
     );
   }
 }
 
-class NextBadgeCard extends StatelessWidget {
-  const NextBadgeCard({super.key, required this.totalBookings, required this.completedThisWeek});
-  final int totalBookings;
-  final int completedThisWeek;
+Future<void> showBadgeBottomSheet(
+  BuildContext context, {
+  required BadgeSpec badge,
+  required bool unlocked,
+}) async {
+  final g = badge.rarity.gradient;
+  final fg = badge.rarity.color;
 
-  @override
-  Widget build(BuildContext context) {
-    // simple “what’s next”
-    String title = "Clean Freak";
-    String hint = "${(3 - completedThisWeek).clamp(0, 3)} more bookings this week";
-    int progress = completedThisWeek.clamp(0, 3);
-    int target = 3;
-
-    if (completedThisWeek >= 3) {
-      title = "Eco Warrior";
-      hint = "${(10 - totalBookings).clamp(0, 10)} pickups to unlock";
-      progress = totalBookings.clamp(0, 10);
-      target = 10;
-    }
-
-    return Container(
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEFFDF7),
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: const Color(0xFF86EFAC)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            const Icon(Icons.emoji_events_rounded, color: Color(0xFF22C55E)),
-            SizedBox(width: 8.w),
-            Text("Next Badge", style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.sp)),
-          ]),
-          SizedBox(height: 6.h),
-          Text(title, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16.sp)),
-          SizedBox(height: 4.h),
-          Text(hint, style: TextStyle(fontSize: 12.sp, color: Colors.black54)),
-          SizedBox(height: 10.h),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8.r),
-            child: LinearProgressIndicator(
-              value: progress / target,
-              minHeight: 8.h,
-              backgroundColor: const Color(0xFFD1FAE5),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+  await showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => Padding(
+      padding: EdgeInsets.all(12.w),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.1),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
             ),
-          ),
-        ],
+          ],
+        ),
+        padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 24.h),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64.w, height: 64.w,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: g),
+                borderRadius: BorderRadius.circular(18.r),
+              ),
+              child: Icon(badge.icon, color: fg, size: 30.sp),
+            ),
+            SizedBox(height: 12.h),
+            Text(badge.title,
+                style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w900)),
+            SizedBox(height: 6.h),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+              decoration: BoxDecoration(
+                color: g.last.withOpacity(.25),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Text(badge.rarity.label,
+                  style: TextStyle(
+                      color: fg, fontWeight: FontWeight.w800, fontSize: 11.sp)),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              unlocked
+                  ? badge.description
+                  : "Locked. Keep grinding and come back for your shiny prize 🏆",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13.sp, color: Colors.black87, height: 1.35),
+            ),
+            SizedBox(height: 16.h),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  padding: EdgeInsets.symmetric(vertical: 12.h),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                ),
+                child: const Text('Nice, got it', style: TextStyle(color: Colors.white)),
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom),
+          ],
+        ),
       ),
-    );
-  }
+    ),
+  );
 }
