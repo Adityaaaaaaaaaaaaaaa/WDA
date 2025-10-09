@@ -104,8 +104,10 @@ const Map<String, PageWeight> kRouteWeights = {
   '/dHome': PageWeight.light,
   '/dJobs': PageWeight.light,
   '/dJobDetail': PageWeight.heavy,
-  '/dQr': PageWeight.heavy,
+  '/dMap': PageWeight.heavy,
+  '/dQr': PageWeight.light,
   '/dProfile': PageWeight.medium,
-  '/uProfile': PageWeight.heavy,
+  '/uProfile': PageWeight.medium,
+  '/achievements': PageWeight.medium,
   '/settings': PageWeight.light,
 };
