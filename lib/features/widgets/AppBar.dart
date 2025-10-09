@@ -121,11 +121,6 @@ class _UAppBarState extends State<UAppBar> {
                 IconButton(
                   icon: const Icon(Icons.settings, color: Colors.black87),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("Settings tapped! (to implement)"),
-                      ),
-                    );                      
                     context.push('/Settings');
                   },
                 ),
