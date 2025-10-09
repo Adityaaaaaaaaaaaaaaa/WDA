@@ -17,20 +17,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
     {
       "image": "assets/trash_city.png",
       "title": "Your City's Trash Won't Clean Itself",
-      "desc":
-          "But let's be honest, neither are you… so let's make it easy! Together we keep our city clean."
+      "desc": "But let's be honest, neither are you… so let's make it easy! Together we keep our city clean."
     },
     {
       "image": "assets/recycle.png",
       "title": "Dispose Waste Responsibly",
-      "desc":
-          "Schedule pickups, track disposal requests, and recycle smarter for a greener tomorrow."
+      "desc": "Schedule pickups, track disposal requests, and recycle smarter for a greener tomorrow."
     },
     {
       "image": "assets/clean_city.png",
       "title": "Clean City, Clean Future",
-      "desc":
-          "Join hands with others to build a sustainable future. Every small step makes a big difference."
+      "desc": "Join hands with others to build a sustainable future. Every small step makes a big difference."
     },
   ];
 
