@@ -38,8 +38,7 @@ class _UHomePageState extends State<UHomePage> {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-    final title =
-        user?.displayName == null ? "Welcome" : "Welcome ${user!.displayName}";
+    final title = user?.displayName == null ? "Welcome" : "Welcome ${user!.displayName}";
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       extendBodyBehindAppBar: true,
