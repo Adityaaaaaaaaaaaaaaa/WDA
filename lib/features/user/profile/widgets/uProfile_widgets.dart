@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// Reusable section shell
+/// ===== Reusable section shell =====
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
@@ -35,7 +35,9 @@ class SectionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14.r),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))
+        ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14.r),
@@ -49,7 +51,9 @@ class SectionCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(title!, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w800)),
+                    Text(title!,
+                        style: TextStyle(
+                            fontSize: 14.sp, fontWeight: FontWeight.w800)),
                     const Spacer(),
                     if (trailing != null) trailing!,
                   ],
@@ -65,7 +69,7 @@ class SectionCard extends StatelessWidget {
   }
 }
 
-/// Header with avatar + name + email + quick edit pills
+/// ===== Profile Header =====
 class ProfileHeaderCard extends StatelessWidget {
   const ProfileHeaderCard({
     super.key,
@@ -97,12 +101,16 @@ class ProfileHeaderCard extends StatelessWidget {
             child: CircleAvatar(
               radius: 30.r,
               backgroundColor: const Color(0xFFE5E7EB),
-              backgroundImage: (photoUrl != null && photoUrl!.isNotEmpty) ? NetworkImage(photoUrl!) : null,
+              backgroundImage:
+                  (photoUrl != null && photoUrl!.isNotEmpty)
+                      ? NetworkImage(photoUrl!)
+                      : null,
               child: (photoUrl == null || photoUrl!.isEmpty)
                   ? const Icon(Icons.person, color: Colors.black38, size: 32)
                   : null,
             ),
           ),
+          SizedBox(height: 4.h),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
@@ -115,7 +123,8 @@ class ProfileHeaderCard extends StatelessWidget {
                         displayName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800),
+                        style: TextStyle(
+                            fontSize: 16.sp, fontWeight: FontWeight.w800),
                       ),
                     ),
                     SizedBox(width: 6.w),
@@ -222,8 +231,11 @@ class InfoRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 11.sp, color: Colors.black54)),
-              Text(value, style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w600)),
+              Text(label,
+                  style: TextStyle(fontSize: 11.sp, color: Colors.black54)),
+              Text(value,
+                  style: TextStyle(
+                      fontSize: 13.sp, fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -233,7 +245,38 @@ class InfoRow extends StatelessWidget {
   }
 }
 
-/// Eco points card with progress & CTA
+/// ===== Unified Eco Tier (same mapping as Achievements) =====
+class _Tier {
+  final int min;
+  final int? max;
+  final String label;
+  const _Tier(this.min, this.max, this.label);
+  bool contains(int v) => v >= min && (max == null || v < max!);
+}
+
+class EcoTierProfile {
+  static const List<_Tier> _tiers = [
+    _Tier(0, 100, 'Certified Couch Recycler'),
+    _Tier(100, 500, 'Almost Trying'),
+    _Tier(500, 1000, 'Garbage Padawan'),
+    _Tier(1000, 5000, 'Recycling Intern'),
+    _Tier(5000, 10000, 'Eco Overachiever'),
+    _Tier(10000, 50000, 'Neighborhood Savior'),
+    _Tier(50000, 100000, 'Recycling Demigod'),
+    _Tier(100000, 500000, 'Bin Whisperer'),
+    _Tier(500000, 1000000, 'Mother Earth’s Favorite Mistake'),
+    _Tier(1000000, null, 'The Trash Messiah'),
+  ];
+
+  static _Tier at(int points) {
+    for (final t in _tiers) {
+      if (t.contains(points)) return t;
+    }
+    return _tiers.last;
+  }
+}
+
+/// ===== Eco Points Card =====
 class EcoPointsCard extends StatelessWidget {
   const EcoPointsCard({super.key, required this.points, required this.onSeeAll});
   final int points;
@@ -241,9 +284,10 @@ class EcoPointsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final level = _levelFor(points);
-    final nextTarget = level.nextTarget;
-    final progress = nextTarget == null ? 1.0 : (points / nextTarget).clamp(0, 1);
+    final tier = EcoTierProfile.at(points);
+    final nextTarget = tier.max; // null => top
+    final progress =
+        nextTarget == null ? 1.0 : (points / nextTarget).clamp(0, 1).toDouble();
 
     return SectionCard(
       title: "Eco-Points Progress",
@@ -253,51 +297,159 @@ class EcoPointsCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _LevelDot(color: level.color),
+              _LevelDot(color: const Color(0xFF22C55E)),
               SizedBox(width: 8.w),
-              Text(level.label, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.sp)),
-              const Spacer(),
-              Text("$points${nextTarget == null ? "" : "/$nextTarget"} Points",
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.sp, color: Colors.black87)),
+              Expanded(
+                child: Text(
+                  tier.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      TextStyle(fontWeight: FontWeight.w800, fontSize: 13.sp),
+                ),
+              ),
+              Text(
+                nextTarget == null ? "$points" : "$points / ${tier.max}",
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.sp,
+                    color: Colors.black87),
+              ),
             ],
           ),
           SizedBox(height: 10.h),
+          const _AnimatedProgressBar(), // background animated aura
+          SizedBox(height: 6.h),
           ClipRRect(
             borderRadius: BorderRadius.circular(8.r),
-            child: LinearProgressIndicator(
-              value: progress.toDouble(),
-              minHeight: 8.h,
-              backgroundColor: const Color(0xFFE5E7EB),
-              valueColor: AlwaysStoppedAnimation<Color>(level.color),
-            ),
+            child: _LinearFancyProgress(value: progress),
           ),
           SizedBox(height: 8.h),
           Text(
             nextTarget == null
-                ? "Top tier reached — you eco legend!"
-                : "${nextTarget - points} more points to reach ${level.nextLabel}",
+                ? "Top tier reached — The planet says “thanks, I guess?”"
+                : "${(nextTarget - points).clamp(0, nextTarget)} points left until you evolve again.",
             style: TextStyle(fontSize: 11.sp, color: Colors.black54),
           ),
         ],
       ),
     );
   }
+}
 
-  _Level _levelFor(int pts) {
-    if (pts >= 1000) return const _Level('Eco Deity', null, '-', Color(0xFF065F46));
-    if (pts >= 600) return const _Level('Green Hero', 1000, 'Eco Deity', Color(0xFF15803D));
-    if (pts >= 350) return const _Level('Eco Warrior', 600, 'Green Hero', Color(0xFF16A34A));
-    if (pts >= 150) return const _Level('Green Rookie', 350, 'Eco Warrior', Color(0xFF22C55E));
-    return const _Level('Leafling', 150, 'Green Rookie', Color(0xFF34D399));
+/// animated glow under the progress bar
+class _AnimatedProgressBar extends StatefulWidget {
+  const _AnimatedProgressBar();
+
+  @override
+  State<_AnimatedProgressBar> createState() => _AnimatedProgressBarState();
+}
+
+class _AnimatedProgressBarState extends State<_AnimatedProgressBar>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, __) {
+        final v = _c.value;
+        return Container(
+          height: 6.h,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8.r),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF10B981).withOpacity(.18 + v * .12),
+                blurRadius: 24 + v * 10,
+                spreadRadius: 1 + v * 2,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
-class _Level {
-  final String label;
-  final int? nextTarget;
-  final String nextLabel;
-  final Color color;
-  const _Level(this.label, this.nextTarget, this.nextLabel, this.color);
+/// colorful shifting linear progress
+class _LinearFancyProgress extends StatefulWidget {
+  const _LinearFancyProgress({required this.value});
+  final double value;
+
+  @override
+  State<_LinearFancyProgress> createState() => _LinearFancyProgressState();
+}
+
+class _LinearFancyProgressState extends State<_LinearFancyProgress>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final clamped = widget.value.clamp(0, 1.0);
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, __) {
+        final shift = _c.value;
+        return Container(
+          height: 8.h,
+          color: const Color(0xFFE5E7EB),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: clamped.toDouble(),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment(-1 + shift, 0),
+                    end: Alignment(1 + shift, 0),
+                    colors: const [
+                      Color(0xFF22C55E),
+                      Color(0xFF10B981),
+                      Color(0xFF34D399),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _LevelDot extends StatelessWidget {
@@ -308,15 +460,21 @@ class _LevelDot extends StatelessWidget {
     return Container(
       width: 18.w,
       height: 18.w,
-      decoration: BoxDecoration(color: color.withOpacity(.15), shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: color.withOpacity(.15),
+        shape: BoxShape.circle,
+      ),
       child: Center(
-        child: Container(width: 8.w, height: 8.w, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        child: Container(
+            width: 8.w,
+            height: 8.w,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       ),
     );
   }
 }
 
-/// Achievements preview (3 cute pills)
+/// ===== Achievements preview (visual, sarcastic labels) =====
 class AchievementsPreviewCard extends StatelessWidget {
   const AchievementsPreviewCard({super.key, required this.onSeeAll});
   final VoidCallback onSeeAll;
@@ -328,11 +486,20 @@ class AchievementsPreviewCard extends StatelessWidget {
       trailing: TextButton(onPressed: onSeeAll, child: const Text("See All")),
       child: Row(
         children: const [
-          _BadgePill(icon: Icons.rocket_launch_rounded, label: "First Booking", color: Color(0xFF2563EB)),
+          _BadgePill(
+              icon: Icons.rocket_launch_rounded,
+              label: "First Pickup",
+              color: Color(0xFF2563EB)),
           SizedBox(width: 8),
-          _BadgePill(icon: Icons.eco_rounded, label: "Eco Warrior", color: Color(0xFF16A34A)),
+          _BadgePill(
+              icon: Icons.eco_rounded,
+              label: "Eco Enthusiast",
+              color: Color(0xFF16A34A)),
           SizedBox(width: 8),
-          _BadgePill(icon: Icons.emoji_events_rounded, label: "Green Hero", color: Color(0xFF9CA3AF)),
+          _BadgePill(
+              icon: Icons.emoji_events_rounded,
+              label: "Green Legend",
+              color: Color(0xFFF59E0B)),
         ],
       ),
     );
@@ -340,7 +507,8 @@ class AchievementsPreviewCard extends StatelessWidget {
 }
 
 class _BadgePill extends StatelessWidget {
-  const _BadgePill({required this.icon, required this.label, required this.color});
+  const _BadgePill(
+      {required this.icon, required this.label, required this.color});
   final IconData icon;
   final String label;
   final Color color;
@@ -351,15 +519,28 @@ class _BadgePill extends StatelessWidget {
       child: Container(
         height: 64.h,
         decoration: BoxDecoration(
-          color: color.withOpacity(.1),
+          color: color.withOpacity(.08),
           borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(.12),
+              blurRadius: 14,
+              offset: const Offset(0, 8),
+            )
+          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, color: color, size: 20),
             SizedBox(height: 4.h),
-            Text(label, style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700, color: color)),
+            Text(label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w700,
+                    color: color)),
           ],
         ),
       ),
@@ -367,7 +548,7 @@ class _BadgePill extends StatelessWidget {
   }
 }
 
-/// Bottom sheet used to edit one field
+/// ===== Bottom sheet used to edit one field (unchanged logic) =====
 class EditFieldSheet extends StatefulWidget {
   const EditFieldSheet({
     super.key,
@@ -405,11 +586,18 @@ class _EditFieldSheetState extends State<EditFieldSheet> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 40.w, height: 4.h, decoration: BoxDecoration(color: Colors.black12, borderRadius: BorderRadius.circular(2.r))),
+              Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.circular(2.r))),
               SizedBox(height: 12.h),
               Align(
                   alignment: Alignment.centerLeft,
-                  child: Text("Edit ${widget.label}", style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w800))),
+                  child: Text("Edit ${widget.label}",
+                      style: TextStyle(
+                          fontSize: 14.sp, fontWeight: FontWeight.w800))),
               SizedBox(height: 10.h),
               TextFormField(
                 controller: widget.controller,
@@ -418,7 +606,9 @@ class _EditFieldSheetState extends State<EditFieldSheet> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: const Color(0xFFF3F4F6),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      borderSide: BorderSide.none),
                 ),
                 validator: widget.validator,
               ),
@@ -438,8 +628,10 @@ class _EditFieldSheetState extends State<EditFieldSheet> {
                         if (_formKey.currentState?.validate() != true) return;
                         Navigator.pop(context, widget.controller.text.trim());
                       },
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB)),
-                      child: const Text("Save", style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB)),
+                      child: const Text("Save",
+                          style: TextStyle(color: Colors.white)),
                     ),
                   ),
                 ],

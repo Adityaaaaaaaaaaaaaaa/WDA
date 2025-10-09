@@ -36,34 +36,49 @@ class _UProfilePageState extends State<UProfilePage> {
                 }
                 final data = snap.data!.data() ?? {};
                 final role = (data['role'] as String?) ?? 'disposer';
-                // If they’re not a disposer, still show—just fewer sections
                 final ecoPoints = (data['ecoPoints'] as num?)?.toInt() ?? 0;
 
+                // blue debug
+                // ignore: avoid_print
+                print('\x1B[34m[PROFILE] eco=$ecoPoints role=$role\x1B[0m');
+
                 return ListView(
+                  cacheExtent: MediaQuery.of(context).size.height,
                   padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
                   children: [
-                    // Header (avatar, name, quick edit)
+                    // Header (avatar, name, quick edit) — unchanged behavior
                     ProfileHeaderCard(
-                      displayName: (data['displayName'] as String?) ?? user.displayName ?? 'User',
-                      email: (data['email'] as String?) ?? user.email ?? '-',
+                      displayName: (data['displayName'] as String?) ??
+                          user.displayName ??
+                          'User',
+                      email:
+                          (data['email'] as String?) ?? user.email ?? '-',
                       phone: (data['phone'] as String?) ?? '-',
                       photoUrl: user.photoURL,
-                      onEditName: () => _editField(context, 'displayName', 'Full name', initial: (data['displayName'] as String?) ?? ''),
-                      onEditPhone: () => _editField(context, 'phone', 'Phone number', keyboard: TextInputType.phone, initial: (data['phone'] as String?) ?? ''),
-                      onEditEmail: () => _editField(context, 'email', 'Email', keyboard: TextInputType.emailAddress, initial: (data['email'] as String?) ?? ''),
+                      onEditName: () => _editField(context, 'displayName',
+                          'Full name',
+                          initial:
+                              (data['displayName'] as String?) ?? ''),
+                      onEditPhone: () => _editField(context, 'phone', 'Phone number',
+                          keyboard: TextInputType.phone,
+                          initial: (data['phone'] as String?) ?? ''),
+                      onEditEmail: () => _editField(context, 'email', 'Email',
+                          keyboard: TextInputType.emailAddress,
+                          initial: (data['email'] as String?) ?? ''),
                     ),
                     SizedBox(height: 12.h),
 
-                    // Eco-points progress
+                    // Eco-points progress (revamped to match Achievements tiers)
                     EcoPointsCard(
                       points: ecoPoints,
                       onSeeAll: () {
+                        // always push, per your rule
                         context.push('/achievements');
                       },
                     ),
                     SizedBox(height: 12.h),
 
-                    // Achievements preview row
+                    // Achievements preview row (visual only)
                     AchievementsPreviewCard(
                       onSeeAll: () {
                         context.push('/achievements');
@@ -71,7 +86,7 @@ class _UProfilePageState extends State<UProfilePage> {
                     ),
                     SizedBox(height: 16.h),
 
-                    // Disposer extra info card (address can be updated if you saved it)
+                    // Account details
                     SectionCard(
                       title: "Account",
                       trailing: null,
@@ -88,7 +103,10 @@ class _UProfilePageState extends State<UProfilePage> {
                               icon: Icons.location_on_rounded,
                               label: "Address",
                               value: (data['address'] as String?) ?? '',
-                              onEdit: () => _editField(context, 'address', 'Address', initial: (data['address'] as String?) ?? ''),
+                              onEdit: () => _editField(context, 'address',
+                                  'Address',
+                                  initial:
+                                      (data['address'] as String?) ?? ''),
                             ),
                           ],
                         ],
@@ -125,6 +143,9 @@ class _UProfilePageState extends State<UProfilePage> {
     final user = _auth.currentUser;
     if (user == null) return;
 
-    await _db.collection('users').doc(user.uid).set({field: result.trim()}, SetOptions(merge: true));
+    await _db
+        .collection('users')
+        .doc(user.uid)
+        .set({field: result.trim()}, SetOptions(merge: true));
   }
 }

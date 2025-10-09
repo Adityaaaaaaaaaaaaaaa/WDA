@@ -13,7 +13,8 @@ class AchievementsPage extends StatefulWidget {
   State<AchievementsPage> createState() => _AchievementsPageState();
 }
 
-class _AchievementsPageState extends State<AchievementsPage> {
+class _AchievementsPageState extends State<AchievementsPage>
+    with TickerProviderStateMixin {
   final _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
@@ -22,103 +23,87 @@ class _AchievementsPageState extends State<AchievementsPage> {
   int _totalBookings = 0;
   int _weeklyCompleted = 0;
 
-  // ---------- Tier math ----------
-  // Stepped milestones up to 1,000,000:
-  // 0..150k -> step 1,000
-  // 150k..250k -> step 5,000
-  // 250k..1,000k -> step 10,000
-  int _nextTierAt(int points) {
-    if (points < 150000) {
-      final step = 1000;
-      return ((points / step).floor() + 1) * step;
-    } else if (points < 250000) {
-      final step = 5000;
-      return ((points / step).floor() + 1) * step;
-    } else if (points < 1000000) {
-      final step = 10000;
-      return ((points / step).floor() + 1) * step;
-    } else {
-      return points; // maxed
-    }
-  }
+  late final AnimationController _pulseCtrl;
 
-  String _tierLabel(int points) {
-    if (points >= 750000) return 'Mythic Recycler';
-    if (points >= 500000) return 'Legendary Recycler';
-    if (points >= 250000) return 'Epic Recycler';
-    if (points >= 150000) return 'Elite Recycler';
-    if (points >= 100000) return 'Eco Guardian';
-    if (points >= 50000) return 'Eco Warrior';
-    if (points >= 10000) return 'Green Rookie';
-    if (points >= 1000) return 'Starter';
-    return 'Newcomer';
-  }
+  // ---------- Unified Tier Scale (0 → 1,000,000+) ----------
+  // See EcoTier in widgets file for mapping/labels.
+  int _nextTierAt(int points) => EcoTier.nextThreshold(points);
+  String _tierLabel(int points) => EcoTier.label(points);
 
   // ---------- Badges ----------
+  // These mirror the unified scale & feel fun/sarcastic.
   late final List<BadgeSpec> _badges = [
     BadgeSpec(
-      id: 'first_booking',
-      title: 'First Booking',
-      description: 'Welcome to the party 🎉 — your very first request!',
+      id: 'first_pickup',
+      title: 'First Pickup',
+      description: 'Welcome aboard. You touched trash — bravely.',
       rarity: Rarity.common,
       icon: Icons.rocket_launch_rounded,
       unlocked: (eco, total, week) => total >= 1,
     ),
     BadgeSpec(
-      id: 'serial_booker',
-      title: 'Serial Booker',
-      description: '5 bookings in a row. Not all heroes wear capes.',
+      id: 'triple_trouble',
+      title: 'Weekly Grinder',
+      description: '3 cleanups in a week? Blink twice if you need help.',
       rarity: Rarity.rare,
-      icon: Icons.whatshot_rounded,
-      unlocked: (eco, total, week) => total >= 5,
-    ),
-    BadgeSpec(
-      id: 'clean_freak',
-      title: 'Clean Freak',
-      description: '3 cleanups in a week. Your trash talk is literal 🧼',
-      rarity: Rarity.rare,
-      icon: Icons.local_fire_department_rounded,
+      icon: Icons.schedule_send_rounded,
       unlocked: (eco, total, week) => week >= 3,
     ),
     BadgeSpec(
-      id: 'eco_warrior',
-      title: 'Eco Warrior',
-      description: '10 pickups completed — nature sends hugs 🌿',
+      id: 'task_veteran',
+      title: 'Task Veteran',
+      description: '10 pickups. You now judge other people’s bins.',
       rarity: Rarity.epic,
       icon: Icons.shield_rounded,
       unlocked: (eco, total, week) => total >= 10,
     ),
     BadgeSpec(
-      id: 'night_owl',
-      title: 'Night Owl',
-      description: 'Booked after 10PM. Bold. Mysterious. Slightly caffeinated.',
+      id: 'eco100',
+      title: 'Eco Initiate',
+      description: '100 points. Congratulations for doing… something.',
       rarity: Rarity.common,
-      icon: Icons.nights_stay_rounded,
-      unlocked: (eco, total, week) => true, // Fun: mark based on a flag if you track hours
+      icon: Icons.eco_rounded,
+      unlocked: (eco, total, week) => eco >= 100,
     ),
     BadgeSpec(
-      id: 'points_10k',
-      title: '10k Club',
-      description: '10,000 eco-points. The green flex is real.',
+      id: 'eco500',
+      title: 'Eco Enthusiast',
+      description: '500 points. We see you showing off.',
       rarity: Rarity.rare,
-      icon: Icons.military_tech_rounded,
+      icon: Icons.energy_savings_leaf_rounded,
+      unlocked: (eco, total, week) => eco >= 500,
+    ),
+    BadgeSpec(
+      id: 'eco1k',
+      title: 'Eco Guardian',
+      description: '1,000 points. Plants nod when you walk by.',
+      rarity: Rarity.epic,
+      icon: Icons.verified_rounded,
+      unlocked: (eco, total, week) => eco >= 1000,
+    ),
+    BadgeSpec(
+      id: 'eco10k',
+      title: 'Green Legend',
+      description: '10,000 points. Basically a trash influencer now.',
+      rarity: Rarity.legendary,
+      icon: Icons.emoji_events_rounded,
       unlocked: (eco, total, week) => eco >= 10000,
     ),
     BadgeSpec(
-      id: 'points_100k',
-      title: 'Six-Figure Green',
-      description: '100,000 eco-points. You\'re basically compost royalty.',
-      rarity: Rarity.legendary,
-      icon: Icons.emoji_events_rounded,
+      id: 'eco100k',
+      title: 'Bin Whisperer',
+      description: '100,000 points. The bins… they speak to you.',
+      rarity: Rarity.mythic,
+      icon: Icons.auto_awesome_rounded,
       unlocked: (eco, total, week) => eco >= 100000,
     ),
     BadgeSpec(
-      id: 'points_500k',
-      title: 'Half-Mil',
-      description: '500,000 points. Myth says bins open themselves for you.',
+      id: 'eco1m',
+      title: 'The Trash Messiah',
+      description: '1,000,000 points. Okay, now you’re just farming karma.',
       rarity: Rarity.mythic,
-      icon: Icons.auto_awesome_rounded,
-      unlocked: (eco, total, week) => eco >= 500000,
+      icon: Icons.all_inclusive_rounded,
+      unlocked: (eco, total, week) => eco >= 1000000,
     ),
   ];
 
@@ -126,10 +111,14 @@ class _AchievementsPageState extends State<AchievementsPage> {
   void initState() {
     super.initState();
     _bind();
+    _pulseCtrl =
+        AnimationController(vsync: this, duration: const Duration(seconds: 2))
+          ..repeat(reverse: true);
   }
 
   @override
   void dispose() {
+    _pulseCtrl.dispose();
     _userSub?.cancel();
     super.dispose();
   }
@@ -139,36 +128,51 @@ class _AchievementsPageState extends State<AchievementsPage> {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
 
-    // Watch user ecoPoints live
     _userSub = _db.collection('users').doc(uid).snapshots().listen((doc) async {
+      if (!mounted) return;
       final d = doc.data();
       final pts = (d?['ecoPoints'] as num?)?.toInt() ?? 0;
 
-      // Count total bookings (tasks) and completed-in-last-7-days
-      final totalQ = await _db.collection('tasks')
-          .where('userId', isEqualTo: uid)
-          .get();
-      final total = totalQ.size;
+      // Immediately update eco points
+      setState(() => _ecoPoints = pts);
 
-      final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
-      final weekQ = await _db.collection('tasks')
-          .where('userId', isEqualTo: uid)
-          .where('status', isEqualTo: 'completed')
-          .where('updatedAt', isGreaterThanOrEqualTo: Timestamp.fromDate(sevenDaysAgo))
-          .get();
-      final weekly = weekQ.size;
+      // Then run async queries
+      try {
+        final totalQ = await _db
+            .collection('tasks')
+            .where('userId', isEqualTo: uid)
+            .get();
+        final total = totalQ.size;
 
-      if (!mounted) return;
-      setState(() {
-        _ecoPoints = pts;
-        _totalBookings = total;
-        _weeklyCompleted = weekly;
-      });
+        final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+        final weekQ = await _db
+            .collection('tasks')
+            .where('userId', isEqualTo: uid)
+            .where('status', isEqualTo: 'completed')
+            .where('updatedAt',
+                isGreaterThanOrEqualTo: Timestamp.fromDate(sevenDaysAgo))
+            .get();
+        final weekly = weekQ.size;
+
+        if (!mounted) return;
+        setState(() {
+          _totalBookings = total;
+          _weeklyCompleted = weekly;
+        });
+      } catch (e) {
+        // ignore: avoid_print
+        print('\x1B[34m[ACHV] Failed to load bookings: $e\x1B[0m');
+      }
+
+      // ignore: avoid_print
+      print('\x1B[34m[ACHV] eco=$_ecoPoints total=$_totalBookings weekly=$_weeklyCompleted\x1B[0m');
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final nextAt = _nextTierAt(_ecoPoints);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -185,26 +189,30 @@ class _AchievementsPageState extends State<AchievementsPage> {
       body: Padding(
         padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 16.h),
         child: ListView(
+          cacheExtent: MediaQuery.of(context).size.height,
           children: [
-            // Tier / points card
             SectionHeader(
               title: 'Eco-Points',
               icon: Icons.auto_graph_rounded,
             ),
-            TierMeter(
-              currentPoints: _ecoPoints,
-              currentTierLabel: _tierLabel(_ecoPoints),
-              nextTierAt: _nextTierAt(_ecoPoints),
+            AnimatedOpacity(
+              opacity: _ecoPoints > 0 ? 1 : 0,
+              duration: const Duration(milliseconds: 500),
+              child: TierMeter(
+                currentPoints: _ecoPoints,
+                currentTierLabel: _tierLabel(_ecoPoints),
+                nextTierAt: _nextTierAt(_ecoPoints),
+                glowAnimation: _pulseCtrl,
+              ),
             ),
             SizedBox(height: 14.h),
 
-            // Quick stats
             GlassCard(
               child: Row(
                 children: [
                   _StatChip(
                     icon: Icons.receipt_long_rounded,
-                    label: 'Total Bookings',
+                    label: 'Total Pickups',
                     value: _totalBookings.toString(),
                     color: const Color(0xFF2563EB),
                   ),
@@ -220,7 +228,6 @@ class _AchievementsPageState extends State<AchievementsPage> {
             ),
             SizedBox(height: 16.h),
 
-            // Badges grid
             SectionHeader(
               title: 'Badges',
               icon: Icons.emoji_events_outlined,
@@ -237,21 +244,25 @@ class _AchievementsPageState extends State<AchievementsPage> {
               ),
               itemBuilder: (context, i) {
                 final b = _badges[i];
-                final unlocked = b.unlocked(_ecoPoints, _totalBookings, _weeklyCompleted);
+                final unlocked =
+                    b.unlocked(_ecoPoints, _totalBookings, _weeklyCompleted);
                 return BadgeTile(
                   badge: b,
                   unlocked: unlocked,
-                  onTap: () => showBadgeBottomSheet(context, badge: b, unlocked: unlocked),
+                  onTap: () => showBadgeBottomSheet(
+                    context,
+                    badge: b,
+                    unlocked: unlocked,
+                  ),
+                  pulse: _pulseCtrl,
                 );
               },
             ),
             SizedBox(height: 24.h),
 
-            // Next badge tease
             _NextBadgeHint(
               ecoPoints: _ecoPoints,
-              have10k: _ecoPoints >= 10000,
-              have100k: _ecoPoints >= 100000,
+              nextAt: nextAt,
             ),
 
             SizedBox(height: MediaQuery.of(context).padding.bottom + 12.h),
@@ -306,7 +317,8 @@ class _StatChip extends StatelessWidget {
                           fontSize: 14.sp,
                           color: const Color(0xFF0F172A))),
                   Text(label,
-                      style: TextStyle(fontSize: 11.sp, color: Colors.black54)),
+                      style:
+                          TextStyle(fontSize: 11.sp, color: Colors.black54)),
                 ],
               ),
             ),
@@ -320,45 +332,38 @@ class _StatChip extends StatelessWidget {
 class _NextBadgeHint extends StatelessWidget {
   const _NextBadgeHint({
     required this.ecoPoints,
-    required this.have10k,
-    required this.have100k,
+    required this.nextAt,
   });
 
   final int ecoPoints;
-  final bool have10k;
-  final bool have100k;
+  final int nextAt;
 
   @override
   Widget build(BuildContext context) {
-    String title = 'Next Badge';
-    String subtitle = 'Keep requesting pickups — cleaner streets, happier planet.';
-    double prog = 0.0;
+    final need = (nextAt - ecoPoints).clamp(0, nextAt);
+    final prog = nextAt == 0
+        ? 1.0
+        : (ecoPoints / nextAt).clamp(0, 1).toDouble();
 
-    if (!have10k) {
-      title = '10k Club';
-      final target = 10000;
-      prog = (ecoPoints / target).clamp(0, 1).toDouble();
-      subtitle = '${(target - ecoPoints).clamp(0, target)} points to unlock.';
-    } else if (!have100k) {
-      title = 'Six-Figure Green';
-      final target = 100000;
-      prog = (ecoPoints / target).clamp(0, 1).toDouble();
-      subtitle = '${(target - ecoPoints).clamp(0, target)} points to unlock.';
-    } else {
-      title = 'Mythic vibes';
-      prog = 1;
-      subtitle = 'You\'re farming badges like a pro — go touch some grass 🌱';
-    }
+    final title = need == 0
+        ? 'Tier Max (for now)'
+        : 'Next Tier at $nextAt';
+    final subtitle = need == 0
+        ? "You’ve peaked. Until we move the goalposts again."
+        : '$need points to unlock the next roast.';
 
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14.sp)),
+              style:
+                  TextStyle(fontWeight: FontWeight.w800, fontSize: 14.sp)),
           SizedBox(height: 6.h),
-          NiceProgressBar(value: prog),          SizedBox(height: 6.h),
-          Text(subtitle, style: TextStyle(fontSize: 12.sp, color: Colors.black54)),
+          NiceProgressBar(value: prog, animated: true),
+          SizedBox(height: 6.h),
+          Text(subtitle,
+              style: TextStyle(fontSize: 12.sp, color: Colors.black54)),
         ],
       ),
     );
