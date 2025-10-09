@@ -14,6 +14,7 @@ import 'features/driver/home/dHome_page.dart';
 import 'features/driver/jobs/dJobs_page.dart';
 import 'features/driver/jobs/dJobsDetail_page.dart';
 import 'features/driver/map/dMap_page.dart';
+import 'features/driver/qr/dQr_page.dart';
 import 'features/onboarding/onboarding.dart';
 import 'features/setup/driverSetup_page.dart';
 import 'features/setup/userSetup_page.dart';
@@ -142,6 +143,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/dMap', 
       builder: (context, state) => const DMapPage(),
+    ),
+    GoRoute(
+      path: '/dQr',
+      builder: (context, state) => const DQrPage(),
     ),
   ],
 );

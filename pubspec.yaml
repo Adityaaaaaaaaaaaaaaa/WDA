@@ -38,6 +38,7 @@ dependencies:
   flutter_map_location_marker: ^10.1.0
   flutter_map_marker_cluster: ^8.1.0
   flutter_polyline_points: ^3.1.0
+  mobile_scanner: ^7.1.2
 
 dev_dependencies:
   flutter_test:
