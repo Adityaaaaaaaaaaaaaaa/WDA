@@ -12,7 +12,7 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _controller = PageController();
   int _currentIndex = 0;
-
+ 
   final List<Map<String, String>> _pages = [
     {
       "image": "assets/trash_city.png",
