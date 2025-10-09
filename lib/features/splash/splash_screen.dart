@@ -75,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: bgColor(context),
       body: Center(
         child: LottieOverlay(
-          assetPath: 'assets/Recycle.json',
+          assetPath: 'assets/Recycle.json', 
           width: 220,
           height: 220,
           backgroundColor: Colors.transparent,
