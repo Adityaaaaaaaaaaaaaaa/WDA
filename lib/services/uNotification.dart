@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -19,14 +18,11 @@ class UserTaskAcceptanceNotifier {
   Set<String> _alreadyNotified = <String>{};
   bool _bootstrappedPrefs = false;
 
-  // ------ Debug / tuning knobs ------
   Duration _displayDuration = const Duration(seconds: 10);
   bool _sticky = false;
 
-  /// Make the banner stay on screen until dismissed (good for tweaking UI).
   void setSticky(bool sticky) => _sticky = sticky;
 
-  /// Change how long the banner stays (ignored if sticky = true).
   void setDuration(Duration duration) => _displayDuration = duration;
 
   static const _prefsKey = 'notified.accepted.taskIds';
@@ -43,7 +39,6 @@ class UserTaskAcceptanceNotifier {
     await prefs.setStringList(_prefsKey, _alreadyNotified.toList(growable: false));
   }
 
-  /// Begin listening. Safe to call multiple times; it will re-bind if user changes.
   Future<void> start(BuildContext context) async {
     await _loadPrefs();
     await stop();
@@ -61,7 +56,6 @@ class UserTaskAcceptanceNotifier {
         final data = doc.data();
         final taskId = data['taskId'] as String? ?? doc.id;
 
-        // Notify only once per device unless manually cleared.
         if (_alreadyNotified.contains(taskId)) continue;
 
         final driverAssigned = (data['driverAssigned'] ?? false) == true;
@@ -71,11 +65,11 @@ class UserTaskAcceptanceNotifier {
           final task = TaskModel.fromMap(data);
           _showAcceptedBanner(context, task, driverName);
           _alreadyNotified.add(taskId);
-          _savePrefs(); // fire-and-forget
+          _savePrefs(); 
         }
       }
     }, onError: (_) {
-      // swallow; no banner on errors
+
     }, cancelOnError: false);
   }
 
@@ -84,14 +78,12 @@ class UserTaskAcceptanceNotifier {
     _sub = null;
   }
 
-  /// Clear a single task from the "already notified" set (for testing).
   Future<void> clearForTask(String taskId) async {
     await _loadPrefs();
     _alreadyNotified.remove(taskId);
     await _savePrefs();
   }
 
-  /// Clear all remembered tasks (for testing).
   Future<void> clearAll() async {
     await _loadPrefs();
     _alreadyNotified.clear();
@@ -99,7 +91,6 @@ class UserTaskAcceptanceNotifier {
   }
 
   void _showAcceptedBanner(BuildContext context, TaskModel task, String? driverName) {
-    // Haptic pop
     HapticFeedback.lightImpact();
 
     final messenger = ScaffoldMessenger.of(context);
@@ -108,8 +99,6 @@ class UserTaskAcceptanceNotifier {
     final idShort = task.taskId.split('_').last;
     final driverLabel = (driverName == null || driverName.isEmpty) ? 'A driver' : driverName;
 
-    /// We style the banner as a rounded, elevated “card” using a decorated Container
-    /// inside a transparent MaterialBanner. Buttons are placed inside the card row.
     final banner = MaterialBanner(
       elevation: 0,
       backgroundColor: Colors.transparent,
@@ -118,7 +107,7 @@ class UserTaskAcceptanceNotifier {
       content: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: const Color(0xFF0B1220), // deep navy
+          color: const Color(0xFF0B1220),
           borderRadius: BorderRadius.circular(14),
           gradient: const LinearGradient(
             colors: [Color(0xFF0B1220), Color(0xFF0D1B2A)],
@@ -132,7 +121,6 @@ class UserTaskAcceptanceNotifier {
         ),
         child: Row(
           children: [
-            // Icon pill
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
@@ -143,12 +131,10 @@ class UserTaskAcceptanceNotifier {
               child: const Icon(Icons.local_shipping_rounded, color: Color(0xFF60A5FA)),
             ),
             const SizedBox(width: 12),
-            // Texts
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // headline
                   Text(
                     'Pickup accepted',
                     maxLines: 1,
@@ -160,7 +146,6 @@ class UserTaskAcceptanceNotifier {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  // subline
                   Text(
                     '$driverLabel is on the way • #$idShort',
                     maxLines: 2,
@@ -174,7 +159,6 @@ class UserTaskAcceptanceNotifier {
               ),
             ),
             const SizedBox(width: 10),
-            // Actions (inside the card)
             TextButton(
               onPressed: () {
                 messenger.hideCurrentMaterialBanner();
@@ -200,16 +184,13 @@ class UserTaskAcceptanceNotifier {
           ],
         ),
       ),
-      // Required by MaterialBanner, but we draw actions inside `content`.
       actions: const [SizedBox.shrink()],
     );
 
     messenger.showMaterialBanner(banner);
 
-    // Auto-hide unless sticky
     if (!_sticky) {
       Future.delayed(_displayDuration, () {
-        // Only hide if it's still the current banner
         if (messenger.mounted) {
           messenger.hideCurrentMaterialBanner();
         }

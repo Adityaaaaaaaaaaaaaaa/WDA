@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -38,7 +37,6 @@ class _UProfilePageState extends State<UProfilePage> {
                 final role = (data['role'] as String?) ?? 'disposer';
                 final ecoPoints = (data['ecoPoints'] as num?)?.toInt() ?? 0;
 
-                // blue debug
                 // ignore: avoid_print
                 print('\x1B[34m[PROFILE] eco=$ecoPoints role=$role\x1B[0m');
 
@@ -46,19 +44,13 @@ class _UProfilePageState extends State<UProfilePage> {
                   cacheExtent: MediaQuery.of(context).size.height,
                   padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
                   children: [
-                    // Header (avatar, name, quick edit) — unchanged behavior
                     ProfileHeaderCard(
-                      displayName: (data['displayName'] as String?) ??
-                          user.displayName ??
-                          'User',
-                      email:
-                          (data['email'] as String?) ?? user.email ?? '-',
+                      displayName: (data['displayName'] as String?) ?? user.displayName ?? 'User',
+                      email: (data['email'] as String?) ?? user.email ?? '-',
                       phone: (data['phone'] as String?) ?? '-',
                       photoUrl: user.photoURL,
-                      onEditName: () => _editField(context, 'displayName',
-                          'Full name',
-                          initial:
-                              (data['displayName'] as String?) ?? ''),
+                      onEditName: () => _editField(context, 'displayName', 'Full name',
+                          initial: (data['displayName'] as String?) ?? ''),
                       onEditPhone: () => _editField(context, 'phone', 'Phone number',
                           keyboard: TextInputType.phone,
                           initial: (data['phone'] as String?) ?? ''),
@@ -68,17 +60,14 @@ class _UProfilePageState extends State<UProfilePage> {
                     ),
                     SizedBox(height: 12.h),
 
-                    // Eco-points progress (revamped to match Achievements tiers)
                     EcoPointsCard(
                       points: ecoPoints,
                       onSeeAll: () {
-                        // always push, per your rule
                         context.push('/achievements');
                       },
                     ),
                     SizedBox(height: 12.h),
 
-                    // Achievements preview row (visual only)
                     AchievementsPreviewCard(
                       onSeeAll: () {
                         context.push('/achievements');
@@ -86,7 +75,6 @@ class _UProfilePageState extends State<UProfilePage> {
                     ),
                     SizedBox(height: 16.h),
 
-                    // Account details
                     SectionCard(
                       title: "Account",
                       trailing: null,

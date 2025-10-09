@@ -8,7 +8,7 @@ class DriverTasksService {
 
   String? get _uid => _auth.currentUser?.uid;
 
-  /// Available = not assigned & pending
+  // Available = not assigned & pending
   Stream<QuerySnapshot<Map<String, dynamic>>> streamAvailable() {
     return _db
         .collection('tasks')
@@ -18,7 +18,7 @@ class DriverTasksService {
         .snapshots();
   }
 
-  /// My tasks = assigned to me & (in_progress OR scheduled)
+  // My tasks = assigned to me & (in_progress OR scheduled)
   Stream<QuerySnapshot<Map<String, dynamic>>> streamMyTasks() {
     final uid = _uid ?? '__none__';
     return _db
@@ -29,7 +29,7 @@ class DriverTasksService {
         .snapshots();
   }
 
-  /// Completed = assigned to me & completed
+  // Completed = assigned to me & completed
   Stream<QuerySnapshot<Map<String, dynamic>>> streamCompleted() {
     final uid = _uid ?? '__none__';
     return _db
@@ -48,7 +48,7 @@ class DriverTasksService {
     final tasksCol = _db.collection('tasks');
     final newRef = tasksCol.doc(t.taskId);
 
-    // 1) Check if this driver already has an active (in_progress) job
+    // Check if this driver already has an active (in_progress) job
     final existingActiveSnap = await tasksCol
         .where('driverId', isEqualTo: user.uid)
         .where('status', isEqualTo: 'in_progress')
@@ -58,7 +58,7 @@ class DriverTasksService {
     final bool hasActive = existingActiveSnap.docs.isNotEmpty;
     final String? activeId = hasActive ? existingActiveSnap.docs.first.id : null;
 
-    // 2) Update the newly accepted job:
+    // Update the newly accepted job:
     //    - If there is an active job -> mark NEW job as SCHEDULED (not in_progress)
     //    - If there is no active job    -> mark NEW job as IN_PROGRESS
     //    Also: set acceptedAt on first accept (keeps stable queue order)
@@ -99,8 +99,8 @@ class DriverTasksService {
       }
     });
 
-    // 3) Safety: if somehow there are multiple in_progress, demote the extras
-    //    Keep the current active (if any). If no active previously, the new task is active.
+    // if somehow there are multiple in_progress, demote the extras
+    // Keep the current active (if any). If no active previously, the new task is active.
     final keepActiveId = hasActive ? activeId! : t.taskId;
 
     final othersActive = await tasksCol

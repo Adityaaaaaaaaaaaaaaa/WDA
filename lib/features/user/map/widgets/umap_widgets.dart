@@ -1,11 +1,8 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../model/map_spot.dart';
 import '../../../widgets/waste_type_grid.dart' show wasteTypes, WasteType;
 
-/// ---------- Modern Design System ----------
 class AppColors {
   static const primary = Color(0xFF2563EB);
   static const secondary = Color(0xFF64748B);
@@ -36,7 +33,6 @@ BoxDecoration _modernCard({
   boxShadow: [_modernShadow(elevation: elevation)],
 );
 
-/// ---------- Compact Header with modern filters (NO map-style toggle) ----------
 class MapHeaderBar extends StatelessWidget {
   final bool expanded;
   final Set<String> activeTypes;
@@ -296,7 +292,6 @@ class _WasteTypeChip extends StatelessWidget {
   }
 }
 
-/// ---------- Modern action buttons (refreshed visuals) ----------
 class CompassButton extends StatelessWidget {
   final double bearing;
   final VoidCallback onReset;
@@ -397,7 +392,6 @@ class _FabGlass extends StatelessWidget {
   }
 }
 
-/// ---------- Static crosshair ----------
 class CrosshairOverlay extends StatelessWidget {
   const CrosshairOverlay({super.key});
 
@@ -432,7 +426,6 @@ class _CrosshairPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// ---------- Actionable hint toast ----------
 class HintToast extends StatefulWidget {
   final String text;
   final VoidCallback onDismiss;
@@ -588,7 +581,6 @@ class _HintActionChip extends StatelessWidget {
   }
 }
 
-/// ---------- Permission sheet ----------
 class LocationPermissionSheet extends StatelessWidget {
   final VoidCallback onRequestAgain;
   final VoidCallback onOpenSettings;
@@ -660,14 +652,12 @@ class LocationPermissionSheet extends StatelessWidget {
   }
 }
 
-/// ---------- Bottom sheets ----------
-// ---- Data returned by the picker (multi-select) ----
 class NewSpot {
-  final Set<WasteType> types;      // at least 1 required
-  final String? note;              // description (optional)
-  final String? displayName;       // optional
-  final int? approxQty;            // optional pieces/bags estimate
-  final String? accessNotes;       // optional
+  final Set<WasteType> types;  
+  final String? note;        
+  final String? displayName;  
+  final int? approxQty;        
+  final String? accessNotes;    
 
   const NewSpot({
     required this.types,
@@ -688,7 +678,7 @@ class NewSpotPicker extends StatefulWidget {
 class _NewSpotPickerState extends State<NewSpotPicker> {
   final _note   = TextEditingController();
   final _name   = TextEditingController();
-  final _qty    = TextEditingController();   // numeric text
+  final _qty    = TextEditingController();
   final _access = TextEditingController();
 
   final Set<WasteType> _selected = { wasteTypes.first };
@@ -712,13 +702,12 @@ class _NewSpotPickerState extends State<NewSpotPicker> {
         duration: const Duration(milliseconds: 150),
         padding: EdgeInsets.only(bottom: kb),
         child: SizedBox(
-          height: h * 0.80, // cap at 80%
+          height: h * 0.80,
           child: Container(
             margin: EdgeInsets.all(16.w),
             decoration: _modernCard(elevation: 6, radius: 24),
             child: Column(
               children: [
-                // Header + close
                 Padding(
                   padding: EdgeInsets.fromLTRB(20.w, 16.h, 8.w, 0),
                   child: Row(
@@ -757,10 +746,9 @@ class _NewSpotPickerState extends State<NewSpotPicker> {
                             style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.text)),
                         SizedBox(height: 10.h),
 
-                        // Horizontal grid of chips -> compact (3 rows)
                         Builder(
                           builder: (_) {
-                            const rows = 3; // set to 4 if you prefer 4 lines
+                            const rows = 3; // set to 4 if prefer 4 lines
                             final chipHeight = 44.h;
                             final gridHeight = rows * chipHeight + (rows - 1) * 8.h;
 
@@ -946,7 +934,7 @@ class _WasteTypeSelectorPill extends StatelessWidget {
 }
 
 class SpotSheet extends StatelessWidget {
-  final MapSpot spot;          // use the actual model, not dynamic
+  final MapSpot spot;
   final bool isOwner;
   final VoidCallback onDelete;
 
@@ -959,7 +947,6 @@ class SpotSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Pick a primary color from the first type (fallback to the first waste type in the palette)
     final primaryLabel = (spot.types.isNotEmpty ? spot.types.first : wasteTypes.first.label);
     final primaryType   = wasteTypes.firstWhere((w) => w.label == primaryLabel, orElse: () => wasteTypes.first);
 
@@ -1225,7 +1212,6 @@ class _FilterAllSheetState extends State<FilterAllSheet> {
   }
 }
 
-/// ---------- Modern UI components ----------
 enum _ModernButtonStyle { filled, outlined, destructive }
 
 class _ModernButton extends StatelessWidget {

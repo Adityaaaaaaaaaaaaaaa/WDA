@@ -23,7 +23,7 @@ class BlueSegmentedTab extends StatelessWidget {
         ),
         child: TabBar(
           controller: controller,
-          indicatorSize: TabBarIndicatorSize.tab, // <- full width of each tab
+          indicatorSize: TabBarIndicatorSize.tab,
           dividerColor: Colors.transparent,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.grey.shade700,
@@ -46,7 +46,7 @@ class BlueSegmentedTab extends StatelessWidget {
 
 class TaskCardAvailable extends StatelessWidget {
   final TaskModel task;
-  final DriverTasksService? svc; // nullable => hide Accept in My Tasks
+  final DriverTasksService? svc;
   const TaskCardAvailable({super.key, required this.task, required this.svc});
 
   String _statusLabel() {

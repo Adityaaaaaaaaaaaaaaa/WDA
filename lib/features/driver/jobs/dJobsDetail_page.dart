@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:async';
 import 'dart:ui' show ImageFilter;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import '../../../model/task_model.dart';
 import '../../../services/uRequest_save.dart';
 import '../../user/tasks/widgets/task_detail_widgets.dart' show SectionCard;
@@ -16,7 +14,7 @@ import 'widgets/dJobsDetail_widget.dart';
 
 class DJobDetailPage extends StatefulWidget {
   final TaskModel? task;
-  final String? taskId; // if you navigate with only an id
+  final String? taskId;
 
   const DJobDetailPage({
     super.key,
@@ -32,7 +30,6 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
   final _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
-  // scroll stability
   late final ScrollController _scrollCtrl;
   PageStorageKey<String>? _scrollKey;
 
@@ -70,7 +67,6 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
     super.dispose();
   }
 
-  // --- location handling
   Future<void> _bootstrapLocation() async {
     try {
       _gpsEnabled = await Geolocator.isLocationServiceEnabled();
@@ -95,7 +91,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
         if (!tooSoon && movedFar) {
           _lastLocTick = now;
           _me = LatLng(pos.latitude, pos.longitude);
-          if (mounted) setState(() {}); // redraw route only when it matters
+          if (mounted) setState(() {});
         }
       });
     } catch (_) {
@@ -127,7 +123,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
     return -1;
   }
 
-  // --- actions
+  // actions
 
   Future<void> _accept(TaskModel t) async {
     final user = _auth.currentUser;
@@ -146,7 +142,6 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
   }
 
   Future<void> _abort(TaskModel t) async {
-    // Abort should NOT award completion points (and we don't touch them here).
     await _db.collection('tasks').doc(t.taskId).update({
       'driverAssigned': false,
       'driverId': null,
@@ -181,7 +176,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
       stages['atLandfill'] = true;
       stages['completed'] = true;
 
-      // 1) mark this task as completed
+      // 1 mark this task as completed
       await ref.update({
         'status': 'completed',
         'progressStages': stages,
@@ -189,10 +184,10 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      // 2) award remaining points (service guards against double-award)
+      // 2 award remaining points
       await URequestService().awardCompletionPoints(live.taskId, live.userId);
 
-      // 3) PROMOTE next scheduled task for this driver to in_progress (FIFO by acceptedAt)
+      // 3 PROMOTE next scheduled task for this driver to in_progress
       final String? driverId = live.driverId;
       if (driverId != null && driverId.isNotEmpty) {
         try {
@@ -214,13 +209,13 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
             });
           }
         } catch (_) {
-          // If there is no index or query fails, we just skip promotion silently.
+
         }
       }
       return;
     }
 
-    // regular step
+    // normal step
     stages[nextKey] = true;
     await ref.update({
       'progressStages': stages,
@@ -350,15 +345,15 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                 SectionCard(child: RequesterInfo(userId: t.userId)),
                 SizedBox(height: 12.h),
 
-                // Details (address, coords, waste chips, size, urgency, notes)
+                // Details
                 SectionCard(child: TaskDetailsSummary(task: t)),
                 SizedBox(height: 12.h),
 
-                // QR (blurred until atLocation)
+                // QR
                 SectionCard(child: QrSection(qrData: t.qrCodeData, unlocked: atLocation)),
                 SizedBox(height: 12.h),
 
-                // Location CTA (only if we can’t draw route)
+                // Location 
                 if ((t.lat != null && t.lng != null) &&
                     (_me == null ||
                         !_gpsEnabled ||
@@ -388,7 +383,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                   ),
                 SizedBox(height: 8.h),
 
-                // Map with real route (existing widget)
+                // Map
                 if (t.lat != null && t.lng != null)
                   SectionCard(
                     child: JobMiniMap(
@@ -400,7 +395,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                   ),
                 SizedBox(height: 12.h),
 
-                // Progress (enhanced visuals)
+                // Progress
                 SectionCard(
                   child: ProgressTimeline(
                     stages: stages,
@@ -411,7 +406,7 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
                 ),
                 SizedBox(height: 12.h),
 
-                // Accept ↔ Abort (Abort has confirmation glass dialog)
+                // Accept / Abort button
                 if (!completed)
                   SectionCard(
                     child: DriverActionBar(
@@ -447,7 +442,6 @@ class _DJobDetailPageState extends State<DJobDetailPage> {
   }
 }
 
-// nice glassy abort confirm
 Future<bool?> showAbortConfirm(BuildContext context, TaskModel t) {
   return showDialog<bool>(
     context: context,

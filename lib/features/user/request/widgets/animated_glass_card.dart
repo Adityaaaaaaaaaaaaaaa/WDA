@@ -1,12 +1,9 @@
-// ignore_for_file: deprecated_member_use
-
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:glass/glass.dart';
 
-/// A modern glass card with subtle animated gradient glow.
 class AnimatedGlassCard extends StatefulWidget {
   final Animation<double> animation;
   final String title;
@@ -71,7 +68,6 @@ class _AnimatedGlassCardState extends State<AnimatedGlassCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Title + subtitle
                 Padding(
                   padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
                   child: Column(
@@ -99,7 +95,6 @@ class _AnimatedGlassCardState extends State<AnimatedGlassCard> {
                     ],
                   ),
                 ),
-                // Content
                 Padding(
                   padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 16.h),
                   child: widget.child,
@@ -138,7 +133,7 @@ class _EcoPointsCardState extends State<EcoPointsCard>
   late Animation<double> _glowAnimation;
   late Animation<double> _floatingAnimation;
 
-  bool _isHalfFilled = true; // Start with half-filled representing current points
+  bool _isHalfFilled = true; 
 
   @override
   void initState() {
@@ -146,7 +141,7 @@ class _EcoPointsCardState extends State<EcoPointsCard>
     
     _backgroundController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 15), // Slower for subtlety
+      duration: const Duration(seconds: 15), 
     )..repeat();
 
     _progressController = AnimationController(
@@ -156,24 +151,24 @@ class _EcoPointsCardState extends State<EcoPointsCard>
 
     _glowController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 4000), // Slower glow
+      duration: const Duration(milliseconds: 4000),
     )..repeat(reverse: true);
 
     _floatingController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 4000), // Slower floating
+      duration: const Duration(milliseconds: 4000), 
     )..repeat(reverse: true);
 
     _progressAnimation = Tween<double>(
       begin: 0.0,
-      end: 0.5, // Start with half fill
+      end: 0.5, 
     ).animate(CurvedAnimation(
       parent: _progressController,
       curve: Curves.easeOutCubic,
     ));
 
     _glowAnimation = Tween<double>(
-      begin: 0.1, // Much more subtle
+      begin: 0.1, 
       end: 0.3,
     ).animate(CurvedAnimation(
       parent: _glowController,
@@ -182,13 +177,12 @@ class _EcoPointsCardState extends State<EcoPointsCard>
 
     _floatingAnimation = Tween<double>(
       begin: 0.0,
-      end: 6.0, // Reduced floating distance
+      end: 6.0, 
     ).animate(CurvedAnimation(
       parent: _floatingController,
       curve: Curves.easeInOut,
     ));
 
-    // Start with half progress animation
     _progressController.forward();
   }
 
@@ -230,7 +224,6 @@ class _EcoPointsCardState extends State<EcoPointsCard>
       curve: Curves.elasticOut,
     ));
     _progressController.forward().then((_) {
-      // After showing full, return to half
       Future.delayed(const Duration(milliseconds: 1200), () {
         if (mounted) {
           setState(() {
@@ -269,7 +262,6 @@ class _EcoPointsCardState extends State<EcoPointsCard>
             margin: EdgeInsets.symmetric(vertical: 12.h, horizontal: 4.w),
             child: Stack(
               children: [
-                // Subtle outer glow effect
                 Container(
                   padding: EdgeInsets.all(1.5.w),
                   decoration: BoxDecoration(
@@ -295,7 +287,6 @@ class _EcoPointsCardState extends State<EcoPointsCard>
                   child: _buildMainCard(creationPoints, completionPoints),
                 ),
                 
-                // More floating particles
                 ..._buildFloatingParticles(),
               ],
             ),
@@ -382,7 +373,6 @@ class _EcoPointsCardState extends State<EcoPointsCard>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Background circle
           SizedBox(
             width: 120.w,
             height: 120.w,
@@ -396,7 +386,6 @@ class _EcoPointsCardState extends State<EcoPointsCard>
             ),
           ),
           
-          // Animated progress circle
           SizedBox(
             width: 120.w,
             height: 120.w,
@@ -415,7 +404,6 @@ class _EcoPointsCardState extends State<EcoPointsCard>
             ),
           ),
           
-          // Center content
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -557,30 +545,30 @@ class _EcoPointsCardState extends State<EcoPointsCard>
   }
 
   List<Widget> _buildFloatingParticles() {
-    return List.generate(8, (index) { // Increased from 3 to 8 particles
+    return List.generate(8, (index) { 
       final delay = index * 0.3;
       final offset = 20.0 + (index * 8.0);
-      final side = index % 4; // Distribute particles on different sides
+      final side = index % 4; 
       
       late double left, top, right;
       
       switch (side) {
-        case 0: // Right side
+        case 0: 
           right = 15.w + (index * 8.w);
           top = offset;
           left = double.infinity;
           break;
-        case 1: // Left side
+        case 1: 
           left = 15.w + (index * 5.w);
           top = offset + 20;
           right = double.infinity;
           break;
-        case 2: // Top area
+        case 2: 
           right = 40.w + (index * 12.w);
           top = 10.h + (index * 3.h);
           left = double.infinity;
           break;
-        case 3: // Bottom area
+        case 3: 
           left = 25.w + (index * 10.w);
           top = 180.h + (index * 4.h);
           right = double.infinity;

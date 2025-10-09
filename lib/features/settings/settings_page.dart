@@ -1,8 +1,6 @@
-// settings_page.dart
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: use_build_context_synchronously
 
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,7 +8,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:go_router/go_router.dart';
 
-/// ----- App bar that matches your style, but adds a BACK arrow before the avatar
 class SettingsAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String title;
   const SettingsAppBar({super.key, required this.title});
@@ -70,7 +67,6 @@ class _SettingsAppBarState extends State<SettingsAppBar> {
                   color: Colors.black87,
                   onPressed: () => Navigator.pop(context),
                 ),
-                // Avatar (same style as yours)
                 _loading
                     ? CircleAvatar(radius: 14.r, backgroundColor: Colors.grey.shade300)
                     : CircleAvatar(
@@ -99,11 +95,6 @@ class _SettingsAppBarState extends State<SettingsAppBar> {
                     ),
                   ),
                 ),
-                // Settings button -> stays consistent (pushes to this page)
-                // IconButton(
-                //   icon: const Icon(Icons.settings, color: Colors.black87),
-                //   onPressed: () => context.go('/settings'),
-                // ),
               ],
             ),
           ),
@@ -113,7 +104,7 @@ class _SettingsAppBarState extends State<SettingsAppBar> {
   }
 }
 
-/// ----- SETTINGS PAGE (mockup-style)
+//----- SETTINGS 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -171,12 +162,10 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  // --------- Actions (keep your existing sign-in flow untouched) ---------
 
 Future<void> _logout(BuildContext context) async {
   try {
     await FirebaseAuth.instance.signOut();
-    // use the singleton
     try { await GoogleSignIn.instance.signOut(); } catch (_) {}
   } finally {
     if (context.mounted) context.go('/signup');
@@ -185,13 +174,9 @@ Future<void> _logout(BuildContext context) async {
 
 Future<void> _switchAccount(BuildContext context) async {
   try {
-    // clear current sessions
     await FirebaseAuth.instance.signOut();
     try { await GoogleSignIn.instance.signOut(); } catch (_) {}
-
-    // open Google account chooser (your API)
     final googleUser = await GoogleSignIn.instance.authenticate();
-    
     final googleAuth = await googleUser.authentication;
     final cred = GoogleAuthProvider.credential(
       idToken: googleAuth.idToken,
@@ -209,7 +194,7 @@ Future<void> _switchAccount(BuildContext context) async {
     final snap =
         await FirebaseFirestore.instance.collection('users').doc(uid).get();
     if (snap.exists) {
-      context.go('/uHome'); // or your home route
+      context.go('/uHome');
     } else {
       context.go('/signup');
     }
@@ -238,7 +223,6 @@ Future<void> _deleteAccountFlow(BuildContext context) async {
   if (ok != true) return;
 
   try {
-    // best-effort: remove user doc first
     await FirebaseFirestore.instance.collection('users').doc(user.uid).delete().catchError((_) {});
     await user.delete();
     try { await GoogleSignIn.instance.signOut(); } catch (_) {}
@@ -246,7 +230,6 @@ Future<void> _deleteAccountFlow(BuildContext context) async {
     if (context.mounted) context.go('/onboarding');
   } on FirebaseAuthException catch (e) {
     if (e.code == 'requires-recent-login') {
-      // reauth with your Google flow, then retry once
       try {
         final googleUser = await GoogleSignIn.instance.authenticate();
 
@@ -279,7 +262,6 @@ Future<void> _deleteAccountFlow(BuildContext context) async {
 }
 }
 
-// ---- Tiles & Buttons (mockup-ish)
 
 class _CardTile extends StatelessWidget {
   final IconData leading;
@@ -346,14 +328,13 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-// ---- Fake but realistic texts (scrollable in dialog with X button)
 Future<void> _showDocDialog(BuildContext context, String title, String body) async {
   await showDialog(
     context: context,
     barrierColor: Colors.black.withOpacity(0.25),
     builder: (_) => Dialog(
       insetPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 24.h),
-      backgroundColor: Colors.transparent, // <- glass container handles bg
+      backgroundColor: Colors.transparent,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18.r),
         child: BackdropFilter(
@@ -399,7 +380,6 @@ Future<void> _showDocDialog(BuildContext context, String title, String body) asy
                   ),
                 ),
                 Divider(height: 1, color: Colors.black.withOpacity(0.08)),
-                // scrollable content
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),

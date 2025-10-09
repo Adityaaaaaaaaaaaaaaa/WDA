@@ -1,10 +1,8 @@
-// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../model/map_spot.dart';
 import '../../../widgets/waste_type_grid.dart' show wasteTypes, WasteType;
 
-/// ===== Design bits reused for Driver Map =====
 class DColors {
   static const primary = Color(0xFF2563EB);
   static const secondary = Color(0xFF64748B);
@@ -63,7 +61,7 @@ Widget clusterBubble(int count) => Container(
   ),
 );
 
-/// ---------- Header (filters only by waste types) ----------
+// ---------- Header (filters by waste types) ----------
 class DriverMapHeaderBar extends StatelessWidget {
   final bool expanded;
   final Set<String> activeTypes;
@@ -234,7 +232,7 @@ class _WasteTypeChip extends StatelessWidget {
   }
 }
 
-/// ---------- Permission chip ----------
+// ---------- Permission chip ----------
 class EnableLocationChip extends StatelessWidget {
   final VoidCallback onTap;
   const EnableLocationChip({super.key, required this.onTap});
@@ -264,7 +262,6 @@ class EnableLocationChip extends StatelessWidget {
   }
 }
 
-/// ---------- Reused utility widgets (compass / locate / crosshair / hint + permission sheet) ----------
 class CompassButton extends StatelessWidget {
   final double bearing;
   final VoidCallback onReset;
@@ -456,7 +453,6 @@ class _HintToastState extends State<HintToast> with SingleTickerProviderStateMix
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header row: icon + text + close
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -491,7 +487,6 @@ class _HintToastState extends State<HintToast> with SingleTickerProviderStateMix
                     ],
                   ),
 
-                  // Action button on a NEW line (optional)
                   if (widget.primaryActionText != null && widget.onPrimaryAction != null) ...[
                     SizedBox(height: 10.h),
                     SizedBox(
@@ -521,7 +516,7 @@ class _HintToastState extends State<HintToast> with SingleTickerProviderStateMix
   }
 }
 
-/// ---------- Permission Sheet ----------
+// ---------- Permission Sheet ----------
 class LocationPermissionSheet extends StatelessWidget {
   final VoidCallback onRequestAgain;
   final VoidCallback onOpenSettings;
@@ -628,7 +623,7 @@ class _ModernButton extends StatelessWidget {
   }
 }
 
-// --- Driver full filter sheet (multi-select of waste types) ---
+// --- Driver full filter sheet ---
 class DriverFilterAllSheet extends StatefulWidget {
   final Set<String> initial;
   const DriverFilterAllSheet({super.key, required this.initial});
@@ -715,7 +710,7 @@ class _DriverFilterAllSheetState extends State<DriverFilterAllSheet> {
   }
 }
 
-/// Selector pill used in the filter sheet
+// Selector pill used in the filter sheet
 class _WasteTypeSelectorPill extends StatelessWidget {
   final WasteType type;
   final bool isSelected;
@@ -767,7 +762,7 @@ class _WasteTypeSelectorPill extends StatelessWidget {
   }
 }
 
-/// ---------- Driver spot sheet with "Mark Cleaned" ----------
+// ---------- Driver spot sheet with "Mark Cleaned" ----------
 class DriverSpotSheet extends StatelessWidget {
   final MapSpot spot;
   final VoidCallback onMarkCleaned;

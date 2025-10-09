@@ -4,45 +4,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 
-/// Global Navigator key (needed for precaching context)
+// Global Navigator key (needed for precaching context)
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Background images to precache for the home screen
 const List<String> kHomeBgAssets = [
   'assets/signup.png',
 ];
 
-/// Runs at startup to apply system-level tweaks
+// Runs at startup to apply system-level tweaks
 Future<void> perfBootstrap() async {
-  // 1) Smoother touch on variable refresh-rate screens (no-op if unsupported)
   try {
     GestureBinding.instance.resamplingEnabled = true;
   } catch (_) {}
-
   _setAdaptiveRefresh(high: true);
-
-  // 2) Right-size global image cache for 4GB devices
   final cache = PaintingBinding.instance.imageCache;
-  cache.maximumSize = 200;            // number of decoded images to keep
-  cache.maximumSizeBytes = 120 << 20; // ~120MB
-
-  // 3) (Optional) Hide frame banners in DEBUG ONLY — these are top-level vars.
+  cache.maximumSize = 200;            
+  cache.maximumSizeBytes = 120 << 20;
   assert(() {
     debugPrintBeginFrameBanner = false;
     debugPrintEndFrameBanner = false;
     return true;
   }());
-
-  // 4) Pre-warm a frame to reduce first-navigation hitch
   WidgetsBinding.instance.scheduleWarmUpFrame();
-
-  // 5) Network: bump HTTP keep-alive/connection limits a bit
   HttpOverrides.global = _HttpTuningOverrides();
-
   JankMonitor.attach();
 }
 
-/// Lifecycle observer to clear/shrink caches when backgrounded
+// Lifecycle observer to clear/shrink caches when backgrounded
 class PerfLifecycle with WidgetsBindingObserver {
   void attach() => WidgetsBinding.instance.addObserver(this);
   void detach() => WidgetsBinding.instance.removeObserver(this);
@@ -51,14 +39,12 @@ class PerfLifecycle with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
       final cache = PaintingBinding.instance.imageCache;
-      cache.clear();            // drop decoded images
-      cache.clearLiveImages();  // drop strongly-held frames
-      // Optionally shrink the cap while backgrounded (will grow again on resume)
+      cache.clear();          
+      cache.clearLiveImages();
       cache.maximumSize = 120;
-      cache.maximumSizeBytes = 80 << 20; // ~80MB
+      cache.maximumSizeBytes = 80 << 20;
     }
     if (state == AppLifecycleState.resumed) {
-      // restore your normal cap from _perfBootstrap (200 / 120MB, etc.)
       final cache = PaintingBinding.instance.imageCache;
       cache.maximumSize = 200;
       cache.maximumSizeBytes = 120 << 20;
@@ -68,20 +54,20 @@ class PerfLifecycle with WidgetsBindingObserver {
 
 final perfObserver = PerfLifecycle();
 
-/// Scroll behavior tweak
+// Scroll behavior tweak
 class TightScrollBehavior extends MaterialScrollBehavior {
   const TightScrollBehavior();
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) => const ClampingScrollPhysics();
 }
 
-/// Adaptive refresh rate (Android only)
+// Adaptive refresh rate (Android)
 Future<void> _setAdaptiveRefresh({bool high = true}) async {
   try {
     final modes = await FlutterDisplayMode.supported;
     if (modes.isEmpty) return;
     modes.sort((a, b) => b.refreshRate.compareTo(a.refreshRate));
-    final best = modes.first;                         // highest Hz
+    final best = modes.first;
     final native60 = modes.firstWhere(
       (m) => m.refreshRate.round() == 60, orElse: () => modes.last,
     );
@@ -89,15 +75,15 @@ Future<void> _setAdaptiveRefresh({bool high = true}) async {
   } catch (_) {}
 }
 
-/// HTTP connection tuning
+// HTTP connection tuning
 class _HttpTuningOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     final c = super.createHttpClient(context);
-    c.autoUncompress = true;                         // prefer gzip/br when server supports
-    c.maxConnectionsPerHost = 6;                     // avoid connection stampedes
+    c.autoUncompress = true;                         
+    c.maxConnectionsPerHost = 6;
     c.connectionTimeout = const Duration(seconds: 30);
-    c.idleTimeout = const Duration(seconds: 30);     // only for idle pooled sockets
+    c.idleTimeout = const Duration(seconds: 30);
     return c;
   }
 }
@@ -107,8 +93,7 @@ Future<void> precacheHomeImages() async {
   final ctx = rootNavigatorKey.currentContext;
   if (ctx == null) return;
 
-  // Target a safe logical width for decoding (adjust if your cards are bigger)
-  final double logicalWidth = MediaQuery.of(ctx).size.width;     // full width
+  final double logicalWidth = MediaQuery.of(ctx).size.width;
   final double devicePixelRatio = MediaQuery.of(ctx).devicePixelRatio;
   final int decodeWidth = (logicalWidth * devicePixelRatio).clamp(600, 1440).toInt();
 
@@ -125,7 +110,6 @@ class JankMonitor {
 
   static void attach() {
     try {
-      // Tracks recent frame rasterization times; marks "stressed" if avg > ~20ms
       SchedulerBinding.instance.addTimingsCallback((timings) {
         for (final t in timings) {
           _rasterMs.add(t.rasterDuration.inMilliseconds);
@@ -133,7 +117,7 @@ class JankMonitor {
         }
         if (_rasterMs.isEmpty) return;
         final avg = _rasterMs.reduce((a, b) => a + b) / _rasterMs.length;
-        final stressed = avg > 20; // > ~60 FPS budget
+        final stressed = avg > 20;
         if (isStressed.value != stressed) isStressed.value = stressed;
       });
     } catch (_) {}

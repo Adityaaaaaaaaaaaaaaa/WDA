@@ -1,4 +1,3 @@
-// lib/services/uTasks_updateDelete.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../model/task_model.dart';
@@ -12,15 +11,13 @@ class UTasksUpdateDeleteService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Live single-task stream (for details page)
   Stream<TaskModel> streamTaskById(String taskId) {
     return _db.collection("tasks").doc(taskId).snapshots().map((doc) => doc.toTask());
   }
 
-  /// Update task AND recalc points: adjusts user ecoPoints by the delta of creation points.
   Future<void> updateTaskWithRecalc({
     required TaskModel original,
-    required Map<String, dynamic> updates, // include "newEcoPoints"
+    required Map<String, dynamic> updates, 
   }) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");
@@ -29,7 +26,6 @@ class UTasksUpdateDeleteService {
     final int newCreation = (newEco / 2).floor();
     final int newCompletion = newEco - newCreation;
 
-    // compute delta on user's creation points
     final int oldCreation = original.creationPoints;
     final int delta = newCreation - oldCreation;
 
@@ -37,7 +33,6 @@ class UTasksUpdateDeleteService {
     final taskRef = _db.collection("tasks").doc(original.taskId);
     final userRef = _db.collection("users").doc(user.uid);
 
-    // task updates
     final Map<String, dynamic> t = {
       ...updates,
       "taskPoints": newEco,
@@ -45,13 +40,12 @@ class UTasksUpdateDeleteService {
       "completionPoints": newCompletion,
       "updatedAt": Timestamp.fromDate(DateTime.now()),
     };
-    // normalize timestamp if provided
+
     final ts = updates["pickupDateTime"];
     if (ts is DateTime) t["pickupDateTime"] = Timestamp.fromDate(ts);
 
     batch.update(taskRef, t);
 
-    // ecoPoints delta for user
     if (delta != 0) {
       batch.set(userRef, {"ecoPoints": FieldValue.increment(delta)}, SetOptions(merge: true));
     }
@@ -59,7 +53,6 @@ class UTasksUpdateDeleteService {
     await batch.commit();
   }
 
-  /// Cancel task + revoke creation points once (idempotent via 'creationRevoked' flag)
   Future<void> cancelTaskAndRevokeCreation(TaskModel task) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");
@@ -90,8 +83,6 @@ class UTasksUpdateDeleteService {
     });
   }
 
-  /// When the driver scans user's QR code (driver app calls this).
-  /// Links driver and marks atLocation + in_progress + qrCodeUsed.
   Future<void> markQrScannedByDriver({
     required String taskId,
     required String driverId,
@@ -110,7 +101,6 @@ class UTasksUpdateDeleteService {
     });
   }
 
-  /// Generic progress flag setter (driver side). If completed becomes true -> award completion pts.
   Future<void> setProgress(String taskId, String stageKey, bool value) async {
     final taskRef = _db.collection("tasks").doc(taskId);
     await taskRef.update({
@@ -121,13 +111,11 @@ class UTasksUpdateDeleteService {
     });
 
     if (stageKey == "completed" && value) {
-      // award remaining points (uses your existing function in URequestService)
       final data = (await taskRef.get()).data()!;
       await URequestService().awardCompletionPoints(taskId, data["userId"]);
     }
   }
 
-  /// Soft delete (mark as cancelled)
   Future<void> deleteTaskForUser(String taskId) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");
@@ -149,7 +137,6 @@ class UTasksUpdateDeleteService {
     });
   }
 
-  /// Stream for upcoming (active) tasks
   Stream<List<Map<String, dynamic>>> streamUpcomingTasks() {
     final user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");
@@ -157,14 +144,13 @@ class UTasksUpdateDeleteService {
     return _db
         .collection("tasks")
         .where("userId", isEqualTo: user.uid)
-        .where("userDeleted", isEqualTo: false) // ✅ only active
+        .where("userDeleted", isEqualTo: false)
         .orderBy("createdAt", descending: true)
         .snapshots()
         .map((snapshot) =>
             snapshot.docs.map((doc) => doc.data()).toList());
   }
 
-  /// Stream for history (completed + cancelled + deleted)
   Stream<List<Map<String, dynamic>>> streamHistoryTasks() {
     final user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");

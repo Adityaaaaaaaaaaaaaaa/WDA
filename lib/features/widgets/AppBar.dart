@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 
 class UAppBar extends StatefulWidget implements PreferredSizeWidget {
-  final String title; // Just the center text (e.g., "Home")
+  final String title; 
 
   const UAppBar({
     super.key,
@@ -78,7 +78,6 @@ class _UAppBarState extends State<UAppBar> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Profile Image / Loader
                 _loading
                     ? CircleAvatar(
                         radius: 14.r,
@@ -100,7 +99,6 @@ class _UAppBarState extends State<UAppBar> {
                             : null,
                       ),
 
-                // Center Title with user name
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10.w),
@@ -117,7 +115,6 @@ class _UAppBarState extends State<UAppBar> {
                   ),
                 ),
 
-                // Settings button
                 IconButton(
                   icon: const Icon(Icons.settings, color: Colors.black87),
                   onPressed: () {

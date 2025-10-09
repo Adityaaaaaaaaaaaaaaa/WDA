@@ -49,7 +49,7 @@ Future<void> main() async {
   debugPrint = (String? message, {int? wrapWidth}) {};
   runApp(const ProviderScope(child: MyApp()));
     WidgetsBinding.instance.addPostFrameCallback((_) {
-    precacheHomeImages();  // fire-and-forget
+    precacheHomeImages();
   });
 }
 
@@ -59,7 +59,7 @@ final GoRouter _router = GoRouter(
   routes: [
     GoRoute(
       path: '/onboarding',
-      builder: (context, state) => const OnboardingPage(), //3 page onboarding
+      builder: (context, state) => const OnboardingPage(),
     ),
     GoRoute(
       path: '/signup',
@@ -98,7 +98,6 @@ final GoRouter _router = GoRouter(
       builder: (context, state) {
         final taskId = state.extra as String?;
         if (taskId == null) {
-          // Optional: show a friendly error page
           return const Scaffold(body: Center(child: Text('Missing task id')));
         }
         return UTaskDetailsPage(taskId: taskId);
@@ -132,7 +131,6 @@ final GoRouter _router = GoRouter(
           return DJobDetailPage(taskId: extra);
         }
 
-        // optional: support deep link /dJobDetail?id=...
         final idFromQuery = state.uri.queryParameters['id'];
         if (idFromQuery != null && idFromQuery.isNotEmpty) {
           return DJobDetailPage(taskId: idFromQuery);
@@ -166,22 +164,18 @@ final GoRouter _router = GoRouter(
   ],
 );
 
-// Safe, version-agnostic way to read the current path without poking notifiers.
 String _readLocation() {
   try {
-    // Newer go_router: RouteMatchList has a `uri` (Uri)
     final cfg = _router.routerDelegate.currentConfiguration;
     final Uri? uri = (cfg as dynamic).uri as Uri?;
     if (uri != null) return uri.path;
 
-    // Some versions expose a `location` (String) instead
     final String? loc = (cfg as dynamic).location as String?;
     if (loc != null) return Uri.parse(loc).path;
   } catch (_) {
-    // fall through
+
   }
   try {
-    // Last resort (may notify) — used only if the above fails
     return _router.routeInformationProvider.value.uri.path;
   } catch (_) {
     return '/';
@@ -205,13 +199,7 @@ class MyApp extends ConsumerWidget {
           title: 'Waste Disposal App',
           routerConfig: _router,
           builder: (context, child) {
-            // ✅ Use the global _router; do NOT use GoRouter.of(context) here
-            // Replace these two lines:
-            // final routeInfo = _router.routeInformationProvider.value;
-            // final location  = routeInfo.uri.path;
-
-            // With this single line:
-            final location = _readLocation();   // read-only and safe
+            final location = _readLocation();
 
             final weight = kRouteWeights[location] ?? PageWeight.light;
 
@@ -225,14 +213,12 @@ class MyApp extends ConsumerWidget {
                   switchInCurve: spec.curveIn,
                   switchOutCurve: spec.curveOut,
 
-                  // ✅ Keep only the current child (prevents two Navigators with same GlobalKey)
                   layoutBuilder: (current, previous) => current ?? const SizedBox.shrink(),
 
-                  // 'widget' is non-null here; no '!' needed
                   transitionBuilder: (widget, animation) => spec.builder(widget, animation),
                   child: KeyedSubtree(
-                    key: ValueKey(location),               // forces switch on route change
-                    child: child ?? const SizedBox.shrink(), // guard during router boot
+                    key: ValueKey(location),               
+                    child: child ?? const SizedBox.shrink(), 
                   ),
                 );
               },

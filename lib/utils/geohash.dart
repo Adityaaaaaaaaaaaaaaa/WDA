@@ -1,5 +1,3 @@
-/// Minimal geohash encoder + neighbors we need for prefix queries.
-/// (Not full spec; good enough for proximity buckets around a point.)
 class MiniGeohash {
   static const _base32 = '0123456789bcdefghjkmnpqrstuvwxyz';
 

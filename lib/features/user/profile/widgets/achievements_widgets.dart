@@ -1,9 +1,6 @@
-// ignore_for_file: deprecated_member_use
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// ===== Rarity =====
 enum Rarity { common, rare, epic, legendary, mythic }
 
 extension RarityX on Rarity {
@@ -16,11 +13,11 @@ extension RarityX on Rarity {
       }[this]!;
 
   Color get color => {
-        Rarity.common: const Color(0xFF64748B), // slate
-        Rarity.rare: const Color(0xFF2563EB), // blue
-        Rarity.epic: const Color(0xFF7C3AED), // violet
-        Rarity.legendary: const Color(0xFFF59E0B), // amber
-        Rarity.mythic: const Color(0xFF06B6D4), // cyan
+        Rarity.common: const Color(0xFF64748B),
+        Rarity.rare: const Color(0xFF2563EB), 
+        Rarity.epic: const Color(0xFF7C3AED), 
+        Rarity.legendary: const Color(0xFFF59E0B),
+        Rarity.mythic: const Color(0xFF06B6D4), 
       }[this]!;
 
   List<Color> get gradient => switch (this) {
@@ -32,7 +29,6 @@ extension RarityX on Rarity {
       };
 }
 
-/// ===== Glass Card =====
 class GlassCard extends StatelessWidget {
   const GlassCard({
     super.key,
@@ -56,7 +52,6 @@ class GlassCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         border: Border.all(color: const Color(0xFFF1F5F9)),
         boxShadow: [
-          // soft lifted light
           BoxShadow(
             color: Colors.black.withOpacity(.05),
             blurRadius: 16,
@@ -77,7 +72,6 @@ class GlassCard extends StatelessWidget {
   }
 }
 
-/// ===== Section Header =====
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
     super.key,
@@ -129,21 +123,18 @@ class SectionHeader extends StatelessWidget {
   }
 }
 
-/// ===== Unified Eco Tier =====
 class EcoTier {
-  // Ordered thresholds -> labels.
-  // Last entry is open-ended (1,000,000+).
   static const List<_Tier> _tiers = [
-    _Tier(0, 100, 'Certified Couch Recycler'),        // 0-99
-    _Tier(100, 500, 'Almost Trying'),                 // 100-499
-    _Tier(500, 1000, 'Garbage Padawan'),              // 500-999
-    _Tier(1000, 5000, 'Recycling Intern'),            // 1k-4,999
-    _Tier(5000, 10000, 'Eco Overachiever'),           // 5k-9,999
-    _Tier(10000, 50000, 'Neighborhood Savior'),       // 10k-49,999
-    _Tier(50000, 100000, 'Recycling Demigod'),        // 50k-99,999
-    _Tier(100000, 500000, 'Bin Whisperer'),           // 100k-499,999
-    _Tier(500000, 1000000, 'Mother Earth’s Favorite Mistake'), // 500k-999,999
-    _Tier(1000000, null, 'The Trash Messiah'),        // 1,000,000+
+    _Tier(0, 100, 'Certified Couch Recycler'),        
+    _Tier(100, 500, 'Almost Trying'),                 
+    _Tier(500, 1000, 'Garbage Padawan'),              
+    _Tier(1000, 5000, 'Recycling Intern'),            
+    _Tier(5000, 10000, 'Eco Overachiever'),          
+    _Tier(10000, 50000, 'Neighborhood Savior'),     
+    _Tier(50000, 100000, 'Recycling Demigod'),      
+    _Tier(100000, 500000, 'Bin Whisperer'),         
+    _Tier(500000, 1000000, 'Mother Earth’s Favorite Mistake'), 
+    _Tier(1000000, null, 'The Trash Messiah'),     
   ];
 
   static String label(int points) {
@@ -156,7 +147,7 @@ class EcoTier {
   static int nextThreshold(int points) {
     for (final t in _tiers) {
       if (t.contains(points)) {
-        return t.max ?? 0; // 0 means top reached
+        return t.max ?? 0; 
       }
     }
     return 0;
@@ -171,7 +162,6 @@ class _Tier {
   bool contains(int v) => v >= min && (max == null || v < max!);
 }
 
-/// ===== Tier Meter (with animated glow + gradient progress) =====
 class TierMeter extends StatelessWidget {
   const TierMeter({
     super.key,
@@ -201,7 +191,6 @@ class TierMeter extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14.r),
               boxShadow: [
-                // subtle animated aura
                 BoxShadow(
                   color: const Color(0xFF22C55E).withOpacity(.10 + glow * .08),
                   blurRadius: 24 + glow * 12,
@@ -273,7 +262,6 @@ class TierMeter extends StatelessWidget {
   }
 }
 
-/// ===== Animated Progress Bar (shifty gradient) =====
 class NiceProgressBar extends StatefulWidget {
   const NiceProgressBar({super.key, required this.value, this.animated = false});
   final double value;
@@ -358,7 +346,6 @@ class _NiceProgressBarState extends State<NiceProgressBar>
   }
 }
 
-/// ===== Badge Model / Tile / Sheet =====
 class BadgeSpec {
   final String id;
   final String title;
@@ -366,7 +353,6 @@ class BadgeSpec {
   final Rarity rarity;
   final IconData icon;
 
-  /// Unlock check (ecoPoints, totals, weekly)
   final bool Function(int ecoPoints, int totalBookings, int weeklyCompleted)
       unlocked;
 

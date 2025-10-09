@@ -1,4 +1,3 @@
-// lib/model/task_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TaskModel {
@@ -79,7 +78,7 @@ class TaskModel {
     this.cancelledBySystem = false,
   });
 
-  /// Helper: pretty date/time
+  // date/time
   String get pickupWhenText {
     final dt = pickupDateTime;
     if (dt == null) return "Flexible";
@@ -89,7 +88,7 @@ class TaskModel {
   }
 
   factory TaskModel.fromMap(Map<String, dynamic> data) {
-    // tolerate numbers coming as int/double
+    // ignore: no_leading_underscores_for_local_identifiers
     double? _toDYN(dynamic v) => v == null ? null : (v as num).toDouble();
 
     return TaskModel(

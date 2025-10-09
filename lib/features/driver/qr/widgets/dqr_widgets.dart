@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -163,7 +162,7 @@ class ScanCardWithQr extends StatelessWidget {
           ]),
           SizedBox(height: 10.h),
 
-          // QR block (rounded + blur lock)
+          // QR block 
           Center(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
@@ -264,7 +263,7 @@ Widget _buildChip(String label, Color bg, Color fg) {
   );
 }
 
-/// Rounded QR (same style as job detail page)
+// Rounded QR
 class _RoundQr extends StatelessWidget {
   const _RoundQr({required this.data});
   final String data;

@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -25,13 +24,9 @@ class _AchievementsPageState extends State<AchievementsPage>
 
   late final AnimationController _pulseCtrl;
 
-  // ---------- Unified Tier Scale (0 → 1,000,000+) ----------
-  // See EcoTier in widgets file for mapping/labels.
   int _nextTierAt(int points) => EcoTier.nextThreshold(points);
   String _tierLabel(int points) => EcoTier.label(points);
 
-  // ---------- Badges ----------
-  // These mirror the unified scale & feel fun/sarcastic.
   late final List<BadgeSpec> _badges = [
     BadgeSpec(
       id: 'first_pickup',
@@ -100,7 +95,7 @@ class _AchievementsPageState extends State<AchievementsPage>
     BadgeSpec(
       id: 'eco1m',
       title: 'The Trash Messiah',
-      description: '1,000,000 points. Okay, now you’re just farming karma.',
+      description: '1,000,000 points. Okay, now you\'re just farming karma.',
       rarity: Rarity.mythic,
       icon: Icons.all_inclusive_rounded,
       unlocked: (eco, total, week) => eco >= 1000000,

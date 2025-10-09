@@ -1,6 +1,3 @@
-// lib/features/user/tasks/widgets/task_detail_widgets.dart
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -42,7 +39,6 @@ TextStyle _titleStyle() => TextStyle(
       letterSpacing: -.2,
     );
 
-/// ====== Section Card (subtle neon edge on hover/tap) ======
 class SectionCard extends StatelessWidget {
   final String? title;
   final Widget child;
@@ -66,7 +62,7 @@ class SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16.r),
         splashColor: a.withOpacity(.05),
         highlightColor: a.withOpacity(.03),
-        onTap: () {}, // enables ink ripple only
+        onTap: () {}, 
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
@@ -112,7 +108,6 @@ class SectionCard extends StatelessWidget {
   }
 }
 
-/// ====== Header Summary (title – single line & chips under) ======
 class HeaderSummaryCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -133,7 +128,6 @@ class HeaderSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // tiny eco avatar
               Container(
                 width: 46.w,
                 height: 46.w,
@@ -152,7 +146,6 @@ class HeaderSummaryCard extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 12.w),
-              // title (single line) + subtitle id
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,7 +187,6 @@ class HeaderSummaryCard extends StatelessWidget {
   }
 }
 
-/// ====== Vertical Progress Timeline with animated fill ======
 class ProgressTimeline extends StatelessWidget {
   const ProgressTimeline({super.key, required this.progress});
   final Map<String, dynamic> progress;
@@ -203,7 +195,6 @@ class ProgressTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ordered steps + friendly labels
     final steps =
         <({String key, String label, IconData icon, String hint})>[
       (
@@ -238,7 +229,6 @@ class ProgressTimeline extends StatelessWidget {
       ),
     ];
 
-    // progress index = last true stage
     int lastTrue = -1;
     for (int i = 0; i < steps.length; i++) {
       if (_on(steps[i].key)) lastTrue = i;
@@ -249,17 +239,14 @@ class ProgressTimeline extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, c) {
-        // We let content size itself; the connector uses intrinsic height.
         return Column(
           children: List.generate(steps.length, (i) {
             final isOn = i <= lastTrue;
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // timeline rail (dot & line)
                 Column(
                   children: [
-                    // dot
                     Container(
                       width: 14.w,
                       height: 14.w,
@@ -285,7 +272,6 @@ class ProgressTimeline extends StatelessWidget {
                           ? Icon(Icons.check, size: 10.sp, color: Colors.white)
                           : null,
                     ),
-                    // connector (animated fill)
                     if (i != steps.length - 1)
                       TweenAnimationBuilder<double>(
                         tween:
@@ -293,10 +279,9 @@ class ProgressTimeline extends StatelessWidget {
                         duration: const Duration(milliseconds: 450),
                         curve: Curves.easeOutCubic,
                         builder: (context, t, _) {
-                          final lineH = 40.h; // per step spacing
+                          final lineH = 40.h; 
                           return Stack(
                             children: [
-                              // background line
                               Container(
                                 width: 2.w,
                                 height: lineH,
@@ -305,7 +290,6 @@ class ProgressTimeline extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(2.r),
                                 ),
                               ),
-                              // animated fill
                               Container(
                                 width: 2.w,
                                 height: lineH * t,
@@ -336,7 +320,6 @@ class ProgressTimeline extends StatelessWidget {
                   ],
                 ),
                 SizedBox(width: 12.w),
-                // step content
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(
@@ -392,7 +375,6 @@ class ProgressTimeline extends StatelessWidget {
   }
 }
 
-/// ====== QR Section (scan-friendly, circular modules, padded, subtle neon) ======
 class QrSection extends StatelessWidget {
   final String qrData;
   const QrSection({super.key, required this.qrData});
@@ -400,13 +382,12 @@ class QrSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasData = qrData.trim().isNotEmpty;
-    const accent = Color(0xFF10B981); // emerald
+    const accent = Color(0xFF10B981); 
     const slate = Color(0xFF475569);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Title row with inner padding so it isn’t stuck to borders
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 2.w),
           child: Row(
@@ -462,7 +443,6 @@ class QrSection extends StatelessWidget {
     
         SizedBox(height: 14.h),
     
-        // Card with subtle animated gradient border + ripple
         _AnimatedBorderCard(
           child: Center(
             child: Material(
@@ -473,7 +453,6 @@ class QrSection extends StatelessWidget {
                 highlightColor: accent.withOpacity(.9),
                 onTap: hasData ? () => _showQrFull(context, qrData) : null,
                 child: Container(
-                  // balanced padding around the QR
                   padding: EdgeInsets.all(18.w),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -510,7 +489,6 @@ class QrSection extends StatelessWidget {
     );
   }
 
-  /// Fullscreen viewer (logic unchanged)
   void _showQrFull(BuildContext context, String data) {
     showDialog(
       context: context,
@@ -549,7 +527,7 @@ class QrSection extends StatelessWidget {
                 ),
                 child: _CircularStyledQr(
                   data: data,
-                  size: 210.w, // larger in dialog
+                  size: 210.w,
                 ),
               ),
               SizedBox(height: 16.h),
@@ -595,7 +573,6 @@ class QrSection extends StatelessWidget {
   }
 }
 
-/// Scan-friendly “round” QR (circular modules + circular eyes), pure black on white.
 class _CircularStyledQr extends StatelessWidget {
   const _CircularStyledQr({required this.data, this.size});
   final String data;
@@ -607,10 +584,10 @@ class _CircularStyledQr extends StatelessWidget {
       borderRadius: BorderRadius.circular(12.r),
       child: QrImageView(
         data: data,
-        size: 210.w,//(size ?? 210.w),
+        size: 210.w,
         version: QrVersions.auto,
-        padding: EdgeInsets.all(10.w), // balanced internal padding
-        backgroundColor: Colors.grey.withOpacity(0.1), // scan-friendly contrast
+        padding: EdgeInsets.all(10.w), 
+        backgroundColor: Colors.grey.withOpacity(0.1), 
         gapless: false,
         eyeStyle: const QrEyeStyle(
           eyeShape: QrEyeShape.circle,
@@ -635,7 +612,6 @@ class _CircularStyledQr extends StatelessWidget {
   }
 }
 
-/// Subtle animated gradient “neon” border around its child (battery-friendly).
 class _AnimatedBorderCard extends StatefulWidget {
   const _AnimatedBorderCard({required this.child});
   final Widget child;
@@ -677,14 +653,12 @@ class _AnimatedBorderCardState extends State<_AnimatedBorderCard>
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
-                // very soft ambient emerald glow
                 _glow(const Color(0xFF10B981).withOpacity(.8), .35, 14, const Offset(0, 6)),
               ],
             ),
             child: Stack(
               fit: StackFit.passthrough,
               children: [
-                // Animated neon ring + moving highlight
                 Positioned.fill(
                   child: IgnorePointer(
                     child: CustomPaint(
@@ -716,17 +690,14 @@ class _BorderPainter extends CustomPainter {
       Radius.circular(20.r),
     );
 
-    // Base subtle stroke (keeps look even when animation is between frames)
     final base = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..color = const Color(0xFFE5E7EB);
     canvas.drawRRect(rr.deflate(1), base);
 
-    // Pulse from 0.25 → 1.0 (breathing)
     final pulse = 0.25 + 0.75 * (0.5 - 0.5 * MathCos(2 * 3.1415926 * progress));
 
-    // Sweep gradient ring that rotates around the card
     final sweepShader = SweepGradient(
       startAngle: 0,
       endAngle: 6.28318, // 2π
@@ -748,7 +719,6 @@ class _BorderPainter extends CustomPainter {
       ..shader = sweepShader;
     canvas.drawRRect(rr.deflate(1), ring);
 
-    // Soft outer glow that also “breathes”
     final glow = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
@@ -756,7 +726,6 @@ class _BorderPainter extends CustomPainter {
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
     canvas.drawRRect(rr.deflate(2), glow);
 
-    // Tiny moving highlight dot traveling the border (subtle)
     final path = Path()..addRRect(rr.deflate(1.5));
     final metric = path.computeMetrics().first;
     final tangent = metric.getTangentForOffset(metric.length * progress);
@@ -773,8 +742,6 @@ class _BorderPainter extends CustomPainter {
       oldDelegate.progress != progress;
 }
 
-/// Tiny helper since dart:math isn't imported in this file and you asked not to change imports.
-/// Cheap cosine using Taylor for small dependency footprint (good enough for a pulse).
 double MathCos(double x) {
   // Normalize to [-pi, pi] for better precision
   const pi = 3.1415926535897932;

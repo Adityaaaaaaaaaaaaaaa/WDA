@@ -1,4 +1,3 @@
-// lib/features/user/tasks/uTasks_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -26,7 +25,6 @@ class UTasksPage extends StatelessWidget {
 
         body: Column(
           children: [
-            // Tabs under the custom AppBar
             Padding(
               padding: EdgeInsets.only(top: 70.h),
               child: const TabBar(
@@ -40,7 +38,6 @@ class UTasksPage extends StatelessWidget {
               ),
             ),
 
-            // Tab contents
             Expanded(
               child: TabBarView(
                 children: [

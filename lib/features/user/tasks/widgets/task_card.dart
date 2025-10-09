@@ -1,4 +1,3 @@
-// lib/features/user/tasks/widgets/task_card.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -34,11 +33,10 @@ class TaskCard extends StatelessWidget {
   }
 
   String _statusLabel(TaskModel task) {
-    // 🔁 Always display "Cancelled" if userDeleted or explicitly cancelled
     if (task.userDeleted || task.cancelledByUser || task.status == "cancelled") {
       return "Cancelled";
     }
-    return task.status; // keep others as-is: pending, in_progress, completed
+    return task.status;
   }
 
   @override
@@ -51,7 +49,7 @@ class TaskCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: Colors.grey.shade300, width: 1.2), // ✅ subtle border
+        border: Border.all(color: Colors.grey.shade300, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -63,7 +61,6 @@ class TaskCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row → Waste type + Points
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -83,7 +80,6 @@ class TaskCard extends StatelessWidget {
           ),
           SizedBox(height: 10.h),
 
-          // Address row
           Row(
             children: [
               const Icon(Icons.location_pin, size: 16, color: Colors.black),
@@ -98,7 +94,6 @@ class TaskCard extends StatelessWidget {
           ),
           SizedBox(height: 8.h),
 
-          // Date + Time chips
           Wrap(
             spacing: 6.w,
             runSpacing: 6.h,
@@ -128,11 +123,9 @@ class TaskCard extends StatelessWidget {
 
           SizedBox(height: 12.h),
 
-          // Action buttons row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // View Details button
               Expanded(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(

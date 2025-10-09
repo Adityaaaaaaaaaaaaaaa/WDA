@@ -39,7 +39,6 @@ class UTaskDetailsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Header summary (title + status + points)
                   HeaderSummaryCard(
                     title: task.wasteTypes.isEmpty
                         ? 'Waste Pickup'
@@ -58,7 +57,6 @@ class UTaskDetailsPage extends StatelessWidget {
 
                   SizedBox(height: 12.h),
 
-                  // Date / Time / Address chips
                   SectionCard(
                     title: 'Scheduling & Location',
                     child: Wrap(
@@ -108,7 +106,6 @@ class UTaskDetailsPage extends StatelessWidget {
 
                   SizedBox(height: 12.h),
 
-                  // Progress stepper
                   SectionCard(
                     title: 'Task Progress',
                     child: ProgressTimeline(progress: task.progressStages),
@@ -116,7 +113,6 @@ class UTaskDetailsPage extends StatelessWidget {
 
                   SizedBox(height: 12.h),
 
-                  // QR (safe & non-crashy)
                   SectionCard(
                     title: 'Pickup QR',
                     child: QrSection(qrData: task.qrCodeData),
@@ -124,7 +120,6 @@ class UTaskDetailsPage extends StatelessWidget {
 
                   SizedBox(height: 12.h),
 
-                  // Notes (if any)
                   if (task.notes.trim().isNotEmpty)
                     SectionCard(
                       title: 'Notes',
@@ -136,7 +131,6 @@ class UTaskDetailsPage extends StatelessWidget {
 
                   SizedBox(height: 16.h),
 
-                  // Actions (delete/cancel only here — editing can be a future step)
                   Row(
                     children: [
                       Expanded(

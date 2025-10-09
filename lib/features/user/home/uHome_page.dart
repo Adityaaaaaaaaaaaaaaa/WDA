@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -30,7 +29,6 @@ class _UHomePageState extends State<UHomePage> {
 
   @override
   void dispose() {
-    // Stop the Firestore stream when leaving this page to avoid leaks.
     _acceptWatcher.stop();
     super.dispose();
   }

@@ -4,7 +4,7 @@ class MapSpot {
   final String id;
   final double lat;
   final double lng;
-  final List<String> types; // <- list
+  final List<String> types; // list
   final String address;
   final String description;
   final String? createdBy;

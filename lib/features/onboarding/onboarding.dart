@@ -41,7 +41,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         curve: Curves.easeOutCubic,
       );
     } else {
-      context.push('/signup'); // 👈 Next step after onboarding
+      context.push('/signup');
     }
   }
 

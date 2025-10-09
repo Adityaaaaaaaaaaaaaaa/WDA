@@ -28,7 +28,7 @@ class MapSpotsService {
 
     await _col.add({
       'types': types,                  // list
-      'address': address,              // store address string
+      'address': address,              
       'description': description ?? '',
       'createdBy': uid,
       'createdByName': createdByName,
@@ -53,14 +53,11 @@ class MapSpotsService {
     await _col.doc(id).delete();
   }
 
-  /// Driver (or admin) marks a spot as cleaned.
-  /// It switches icon (via `cleaned: true`), then deletes after [delay] seconds.
   Future<void> markCleaned(String id, {Duration delay = const Duration(seconds: 15)}) async {
     await _col.doc(id).update({
       'cleaned': true,
       'cleanedAt': FieldValue.serverTimestamp(),
     });
-    // server-side TTL would be ideal; for now, client job:
     Future.delayed(delay, () async {
       try { await _col.doc(id).delete(); } catch (_) {}
     });
@@ -97,7 +94,6 @@ class MapSpotsService {
     });
   }
 
-  // --- helpers (unchanged) ---
   Stream<List<List<T>>> _zip<T>(List<Stream<List<T>>> inputs) async* {
     final buffers = List<List<T>>.generate(inputs.length, (_) => const []);
     final have = List<bool>.filled(inputs.length, false);
