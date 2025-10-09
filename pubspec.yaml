@@ -39,6 +39,11 @@ dependencies:
   flutter_map_marker_cluster: ^8.1.0
   flutter_polyline_points: ^3.1.0
   mobile_scanner: ^7.1.2
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  image_path: "assets/app_icon.png"
 
 dev_dependencies:
   flutter_test:
