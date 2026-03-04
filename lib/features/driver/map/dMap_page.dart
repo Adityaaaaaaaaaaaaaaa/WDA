@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,7 +8,6 @@ import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-
 import '../../../model/map_spot.dart';
 import '../../../services/dMap_service.dart';
 import '../../widgets/AppBar.dart';
@@ -172,17 +170,16 @@ class _DMapPageState extends State<DMapPage> with WidgetsBindingObserver {
     if (z >= 12) return 25.0;
     if (z >= 11) return 40.0;
     if (z >= 10) return 60.0;  // was ~18–25 before — too small
-    if (z >= 9)  return 90.0;  // cover most of the island
-    return 140.0;              // very zoomed out → whole island
+    if (z >= 9)  return 90.0;  // cover most of the mauritius
+    return 140.0;              // very zoomed out → whole of mauritius
   }
 
   void _listenAround(LatLng center) {
     _sub?.cancel();
     _lastQueryCenter = center;
-    //final radiusKm = _radiusKmForZoom(_zoom);
 
     var radiusKm = _radiusKmForZoom(_zoom);
-    if (_zoom <= 9) radiusKm = 120; // hard cap: whole island
+    if (_zoom <= 9) radiusKm = 120; // hard cap: whole of mauritius
 
     _sub = _svc
         .spotsAround(lat: center.latitude, lng: center.longitude, radiusKm: radiusKm)

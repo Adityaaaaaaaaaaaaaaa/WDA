@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:convert';
@@ -12,7 +10,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
-
 import '../../../model/map_spot.dart';
 import '../../../services/map_spots_service.dart';
 import '../../widgets/AppBar.dart';
@@ -34,7 +31,6 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
   final _auth = FirebaseAuth.instance;
 
   final _map = MapController();
-  //CameraFit? _initialFit;
 
   LatLng _initialCenter = _mauritius;
   double _initialZoom = 15;
@@ -62,8 +58,7 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
   // performance helpers
   LatLng? _lastQueryCenter;
 
-  // Was: activeTypes.contains(s.type)
-  // Now: a spot passes if ANY of its types match the filter
+  // a spot passes if ANY of its types match the filter
   bool _passesFilter(MapSpot s) =>
     (_activeTypes.isEmpty || s.types.any(_activeTypes.contains)) &&
     (!_onlyMine || s.createdBy == _uid);
@@ -171,7 +166,6 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
     }
   }
 
-  // In UMapsPage and DMapPage
   static double _radiusKmForZoom(double z) {
     if (z >= 18) return 0.8;
     if (z >= 17) return 1.5;
@@ -182,17 +176,16 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
     if (z >= 12) return 25.0;
     if (z >= 11) return 40.0;
     if (z >= 10) return 60.0;  // was ~18–25 before — too small
-    if (z >= 9)  return 90.0;  // cover most of the island
-    return 140.0;              // very zoomed out → whole island
+    if (z >= 9)  return 90.0;  // cover most of the mauritus
+    return 140.0;              // very zoomed out → whole of mauritius
   }
 
   void _listenAround(LatLng center) {
     _sub?.cancel();
     _lastQueryCenter = center;
-    //final radiusKm = _radiusKmForZoom(_zoom);
 
     var radiusKm = _radiusKmForZoom(_zoom);
-    if (_zoom <= 9) radiusKm = 120; // hard cap: whole island
+    if (_zoom <= 9) radiusKm = 120; // hard cap: whole of mauritius
 
 
     _sub = _svc
@@ -302,7 +295,6 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
       accessNotes: res.accessNotes,
     );
 
-    // Optimistic local pin so the user sees it immediately:
     final primaryLabel = (res.types.isNotEmpty ? res.types.first.label : wasteTypes.first.label);
     final color = wasteTypes.firstWhere((w) => w.label == primaryLabel, orElse: () => wasteTypes.first).color;
 
@@ -313,14 +305,13 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
           width: 36,
           height: 36,
           child: GestureDetector(
-            onTap: () {}, // optional: you could open a lightweight temp sheet here
+            onTap: () {}, 
             child: _Pin(color: color),
           ),
         ),
       );
     });
 
-    // Also re-subscribe so Firestore stream brings the real doc in:
     _listenAround(_cameraCenter);
 
     if (!mounted) return;
@@ -446,7 +437,7 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
                               retinaMode: true,
                             ),
 
-                            // Blue dot (+ accuracy)
+                            // Blue dot
                             const CurrentLocationLayer(
                               style: LocationMarkerStyle(
                                 marker: DefaultLocationMarker(
@@ -482,7 +473,6 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
                         // Crosshair
                         const Center(child: IgnorePointer(child: CrosshairOverlay())),
 
-                        // Permission chip if needed
                         if (_needsLocationPermission)
                           Positioned(
                             right: 16.w,
@@ -509,7 +499,7 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
                             ),
                           ),
 
-                        // Left FAB column
+                        // Left column
                         Positioned(
                           left: 10.w,
                           bottom: 10.h,
@@ -567,7 +557,6 @@ class _UMapsPageState extends State<UMapsPage> with WidgetsBindingObserver {
   }
 }
 
-// ----- small visual helpers for markers/clusters -----
 class _Pin extends StatelessWidget {
   final Color color;
   const _Pin({required this.color});

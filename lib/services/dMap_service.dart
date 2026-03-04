@@ -3,24 +3,19 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../model/map_spot.dart';
-import '../utils/geohash.dart'; // <- same helper you already use in MapSpotsService
+import '../utils/geohash.dart'; 
 
-/// Driver-focused wrapper around the same `map_spots` collection.
-/// Reuses MapSpot model. Driver cannot create spots; can only view + mark cleaned.
 class DriverMapService {
   final _db = FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _col =>
       _db.collection('map_spots');
 
-  /// Stream spots around [lat,lng] within [radiusKm].
-  /// Uses geohash prefix fan-out (center + 8 neighbors) and merges results.
   Stream<List<MapSpot>> spotsAround({
     required double lat,
     required double lng,
     double radiusKm = 10,
   }) {
-    // pick geohash precision similarly to user service
     final precision = radiusKm > 20 ? 5 : radiusKm > 5 ? 6 : 7;
 
     final centerHash = MiniGeohash.encode(lat, lng, precision: precision);
@@ -50,13 +45,11 @@ class DriverMapService {
     });
   }
 
-  /// Driver marks a spot as cleaned. We update then remove only this doc.
   Future<void> markCleaned(String id) async {
     await _col.doc(id).update({
       'cleaned': true,
       'cleanedAt': FieldValue.serverTimestamp(),
     });
-    // client-side cleanup; server-side TTL would be ideal
     Future.delayed(const Duration(seconds: 10), () async {
       try {
         await _col.doc(id).delete();
@@ -64,7 +57,6 @@ class DriverMapService {
     });
   }
 
-  // --- helpers (same math as user service) ---
   double _deg2rad(double d) => d * (pi / 180.0);
 
   double _distanceKm(double lat1, double lon1, double lat2, double lon2) {
@@ -80,8 +72,6 @@ class DriverMapService {
     return R * c;
   }
 
-  /// Zip multiple `Stream<List<T>>` into a single `Stream<List<List<T>>>`.
-  /// This mirrors the implementation you already have in MapSpotsService.
   Stream<List<List<T>>> _zip<T>(List<Stream<List<T>>> inputs) async* {
     final buffers = List<List<T>>.generate(inputs.length, (_) => const []);
     final have = List<bool>.filled(inputs.length, false);
@@ -98,10 +88,8 @@ class DriverMapService {
       }, onError: controller.addError));
     }
 
-    // forward zipped stream
     yield* controller.stream;
 
-    // cleanup when consumer cancels
     for (final s in subs) {
       await s.cancel();
     }

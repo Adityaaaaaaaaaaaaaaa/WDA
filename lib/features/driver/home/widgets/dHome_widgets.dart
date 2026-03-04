@@ -1,13 +1,10 @@
-// ignore_for_file: deprecated_member_use
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../model/task_model.dart';
 
-/// Top-level content for Driver Home
 class DriverHomeContent extends StatelessWidget {
   const DriverHomeContent({super.key});
 
@@ -28,7 +25,6 @@ class DriverHomeContent extends StatelessWidget {
 
     final tasks = FirebaseFirestore.instance.collection('tasks');
 
-    // Stream for the active (in_progress) task
     final inProgressStream = tasks
         .where('driverId', isEqualTo: uid)
         .where('status', isEqualTo: 'in_progress')
@@ -36,11 +32,10 @@ class DriverHomeContent extends StatelessWidget {
         .limit(1)
         .snapshots();
 
-    // Stream for the next scheduled task (FIFO by acceptedAt)
     final scheduledStream = tasks
         .where('driverId', isEqualTo: uid)
         .where('status', isEqualTo: 'scheduled')
-        .orderBy('acceptedAt') // earliest first
+        .orderBy('acceptedAt')
         .limit(1)
         .snapshots();
 
@@ -50,8 +45,6 @@ class DriverHomeContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(height: 4.h),
-
-          // Greeting + stats + quick actions
           _IntroCard(uid: uid),
 
           SizedBox(height: 18.h),
@@ -120,7 +113,6 @@ class DriverHomeContent extends StatelessWidget {
   }
 }
 
-/// Greeting + count + quick actions
 class _IntroCard extends StatelessWidget {
   const _IntroCard({required this.uid});
   final String uid;
@@ -268,7 +260,6 @@ class _QuickActionButton extends StatelessWidget {
   }
 }
 
-/// A single task summary card used for both "In Progress" and "Scheduled"
 class _TaskCard extends StatelessWidget {
   const _TaskCard({
     required this.task,
@@ -425,7 +416,6 @@ class _TaskCard extends StatelessWidget {
   }
 }
 
-/// Simple skeleton placeholder while streams are loading
 class _SkeletonCard extends StatelessWidget {
   const _SkeletonCard();
 
@@ -472,7 +462,6 @@ class _SkeletonCard extends StatelessWidget {
   }
 }
 
-/// Empty state card
 class _EmptyCard extends StatelessWidget {
   const _EmptyCard({required this.title, required this.subtitle, required this.icon});
   final String title;

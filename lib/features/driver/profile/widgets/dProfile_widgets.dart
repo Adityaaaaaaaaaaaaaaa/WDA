@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -306,7 +305,7 @@ class _EditIconState extends State<_EditIcon> {
   }
 }
 
-/// ===================== EDIT SHEETS =====================
+// ===================== EDIT SHEETS =====================
 Future<void> showEditTextSheet(
   BuildContext context, {
   required String title,

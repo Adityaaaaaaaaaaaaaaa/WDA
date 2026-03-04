@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -282,7 +284,7 @@ class _UserSetupPageState extends State<UserSetupPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundGray,
-      resizeToAvoidBottomInset: true, // 👈 important for keyboard
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(
           "EcoDisposal Setup",

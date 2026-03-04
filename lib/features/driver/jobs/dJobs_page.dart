@@ -1,8 +1,6 @@
-// ignore_for_file: deprecated_member_use
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import '../../../model/task_model.dart';
 import '../../../services/dTasks_service.dart';
 import '../../widgets/AppBar.dart';
@@ -53,7 +51,6 @@ class _DJobsPageState extends State<DJobsPage> with SingleTickerProviderStateMix
   }
 }
 
-// -------- Tabs
 
 class _AvailableTab extends StatelessWidget {
   final DriverTasksService svc;
@@ -113,7 +110,6 @@ class _MyTasksTab extends StatelessWidget {
           );
         }
 
-        // Build entries (task + acceptedAt) so we can sort by acceptedAt
         final entries = snap.data!.docs.map((d) {
           final data = d.data();
           final task = TaskModel.fromMap(data);
@@ -123,8 +119,8 @@ class _MyTasksTab extends StatelessWidget {
         }).toList();
 
         // Sort:
-        // 1) in_progress first
-        // 2) then scheduled by acceptedAt asc (fallback to createdAt asc)
+        // in_progress first
+        // then scheduled by acceptedAt asc
         entries.sort((a, b) {
           final aStatus = a.task.status;
           final bStatus = b.task.status;
@@ -135,10 +131,9 @@ class _MyTasksTab extends StatelessWidget {
           if (aStatus == 'scheduled' && bStatus == 'scheduled') {
             final aKey = a.acceptedAt ?? a.task.createdAt;
             final bKey = b.acceptedAt ?? b.task.createdAt;
-            return aKey.compareTo(bKey); // oldest accepted first
+            return aKey.compareTo(bKey);
           }
 
-          // Fallback: newer updatedAt first
           return b.task.updatedAt.compareTo(a.task.updatedAt);
         });
 

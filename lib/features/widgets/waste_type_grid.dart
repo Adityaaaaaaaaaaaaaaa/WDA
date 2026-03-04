@@ -1,4 +1,3 @@
-// lib/features/user/request/widgets/waste_type_grid.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:glass/glass.dart';
@@ -123,7 +122,7 @@ class _WasteTypeGridState extends State<WasteTypeGrid> {
   }
 }
 
-/// ====== Data ======
+// ====== Data ======
 class WasteType {
   final String label;
   final IconData icon;
@@ -136,7 +135,6 @@ class WasteType {
   const WasteType(this.label, this.icon, this.color, {required this.points, required this.sass, required this.description, required this.difficulty, required this.rarity});
 }
 
-/// FULL list of waste types
 final List<WasteType> _wasteTypes = [
   WasteType("Nuclear Waste", Icons.info_outline_rounded, Colors.lime.shade700,
       points: 500,
@@ -464,7 +462,7 @@ final List<WasteType> _wasteTypes = [
       rarity: "Legendary"),
 ];
 
-/// public exports
+// export
 final List<WasteType> wasteTypes = _wasteTypes;
 final Map<String, WasteType> wasteTypeLookup = {
   for (final wt in _wasteTypes) wt.label: wt,

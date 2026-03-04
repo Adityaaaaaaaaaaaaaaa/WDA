@@ -1,16 +1,12 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-
 import '../../../model/task_model.dart';
 import '../../widgets/AppBar.dart';
 import '../../widgets/dNavBar.dart';
 import '../../../services/dQr_service.dart';
-
-// prettier, QR-enabled widgets:
 import 'widgets/dqr_widgets.dart';
 
 class DQrPage extends StatefulWidget {
@@ -23,14 +19,12 @@ class DQrPage extends StatefulWidget {
 class _DQrPageState extends State<DQrPage> {
   final _svc = DQrService();
 
-  // Keep one scanner controller for the lifetime of the page
   final MobileScannerController _scannerCtrl = MobileScannerController();
   Stream<TaskModel?>? _stream;
 
   @override
   void initState() {
     super.initState();
-    // Reduce rebuild noise: only emit when something relevant actually changed
     _stream = _svc
         .streamCurrentInProgress()
         .distinct((a, b) => _sameTaskState(a, b));
@@ -45,7 +39,7 @@ class _DQrPageState extends State<DQrPage> {
   bool _sameTaskState(TaskModel? a, TaskModel? b) {
     if (a == null && b == null) return true;
     if (a == null || b == null) return false;
-    // Compare ids + the fields that drive this screen
+
     final sa = a.progressStages, sb = b.progressStages;
     return a.taskId == b.taskId &&
         a.status == b.status &&
@@ -156,7 +150,7 @@ class _DQrPageState extends State<DQrPage> {
     );
   }
 
-  // ---- scanner dialog (reuses a single controller)
+  // ---- scanner dialog
   Future<String?> _scan(BuildContext context) async {
     String? result;
     await showDialog(

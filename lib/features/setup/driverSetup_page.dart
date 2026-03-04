@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -184,9 +186,6 @@ class _DriverSetupPageState extends State<DriverSetupPage>
     }
   }
 
-  // ------------------------
-  // Reusable widgets
-  // ------------------------
   BoxDecoration _cardDecoration() => BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20.r),
@@ -354,7 +353,7 @@ class _DriverSetupPageState extends State<DriverSetupPage>
       ),
       child: DropdownButtonFormField<String>(
         value: value,
-        isExpanded: true, // 👈 prevents overflow
+        isExpanded: true,
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
@@ -405,7 +404,7 @@ class _DriverSetupPageState extends State<DriverSetupPage>
                   value: e,
                   child: Text(
                     e,
-                    overflow: TextOverflow.ellipsis, // 👈 prevent text overflow
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w500,
@@ -426,7 +425,7 @@ class _DriverSetupPageState extends State<DriverSetupPage>
         duration: const Duration(milliseconds: 300),
         margin: EdgeInsets.symmetric(horizontal: 6.w),
         padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 12.w),
-        constraints: BoxConstraints(minWidth: 90.w), // 👈 ensure proper width
+        constraints: BoxConstraints(minWidth: 90.w),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16.r),
           color: selected ? color.withOpacity(0.15) : Colors.white,
@@ -704,9 +703,6 @@ class _DriverSetupPageState extends State<DriverSetupPage>
     );
   }
 
-  // ------------------------
-  // Build
-  // ------------------------
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -758,9 +754,6 @@ class _DriverSetupPageState extends State<DriverSetupPage>
     );
   }
 
-  // ------------------------
-  // Steps
-  // ------------------------
   Widget _buildStep1() => SlideTransition(
         position: _slideAnimation,
         child: FadeTransition(

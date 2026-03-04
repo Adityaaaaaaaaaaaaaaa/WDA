@@ -1,9 +1,7 @@
-// ignore_for_file: deprecated_member_use
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import '../../widgets/AppBar.dart';
 import '../../widgets/dNavBar.dart';
 import 'widgets/dProfile_widgets.dart';
@@ -85,7 +83,7 @@ class _DProfilePageState extends State<DProfilePage> {
                     padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 24.h),
                     cacheExtent: MediaQuery.of(context).size.height,
                     children: [
-                      // Hero header (avatar + name + email + phone edit)
+                      // header
                       DriverProfileHeroHeader(
                         photoUrl: photoUrl,
                         name: displayName.isEmpty ? 'Driver' : displayName,

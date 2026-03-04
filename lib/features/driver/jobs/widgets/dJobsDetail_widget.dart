@@ -1,4 +1,3 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:async';
 import 'dart:ui' show ImageFilter, FontFeature;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -11,7 +10,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-/// ---------- Small atoms ----------
 
 class StatusBadge extends StatelessWidget {
   const StatusBadge({super.key, required this.color, required this.bg, required this.label});
@@ -49,7 +47,7 @@ class HeaderRow extends StatelessWidget {
   }
 }
 
-/// ---------- Header block ----------
+// ---------- Header block ----------
 
 class JobHeader extends StatelessWidget {
   const JobHeader({
@@ -125,7 +123,7 @@ class JobHeader extends StatelessWidget {
   }
 }
 
-/// ---------- Requester (user) info ----------
+// ---------- Requester (user) info ----------
 
 class RequesterInfo extends StatelessWidget {
   const RequesterInfo({super.key, required this.userId});
@@ -180,11 +178,11 @@ class RequesterInfo extends StatelessWidget {
   }
 }
 
-/// ---------- Task Details summary (address, coords, chips, size, urgency, notes) ----------
+//---------- Task Details summary ----------
 
 class TaskDetailsSummary extends StatelessWidget {
   const TaskDetailsSummary({super.key, required this.task});
-  final dynamic task; // TaskModel-like (we only read fields)
+  final dynamic task;
 
   @override
   Widget build(BuildContext context) {
@@ -283,7 +281,7 @@ class TaskDetailsSummary extends StatelessWidget {
       );
 }
 
-/// ---------- QR (round modules) with lock/blur until atLocation ----------
+/// ---------- Qr ----------
 
 class QrSection extends StatelessWidget {
   const QrSection({super.key, required this.qrData, this.unlocked = false});
@@ -411,7 +409,7 @@ class _RoundQr extends StatelessWidget {
   }
 }
 
-/// ---------- Road route mini map (Google Routes API -> flutter_map polyline) ----------
+/// ---------- mini map  ----------
 
 class JobMiniMap extends StatefulWidget {
   const JobMiniMap({
@@ -430,15 +428,11 @@ class JobMiniMap extends StatefulWidget {
 }
 
 class _JobMiniMapState extends State<JobMiniMap> {
-  // Use enhanced client (Routes API)
-  late final PolylinePoints _routesClient =
-      PolylinePoints.enhanced(dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '');
 
-  // We'll also lazily create a legacy client if we need it (Directions API)
+  late final PolylinePoints _routesClient = PolylinePoints.enhanced(dotenv.env['GOOGLE_MAPS_API_KEY'] ?? '');
   PolylinePoints? _legacyClient;
-
   List<LatLng> _route = const [];
-  LatLng? _lastOrigin; // avoid refetch thrash when position barely changes
+  LatLng? _lastOrigin;
 
   @override
   void initState() {
@@ -455,7 +449,6 @@ class _JobMiniMapState extends State<JobMiniMap> {
   void _maybeFetch() {
     if (widget.me == null) return;
 
-    // Only refetch if origin changed meaningfully
     if (_lastOrigin != null &&
         _lastOrigin!.latitude.toStringAsFixed(5) == widget.me!.latitude.toStringAsFixed(5) &&
         _lastOrigin!.longitude.toStringAsFixed(5) == widget.me!.longitude.toStringAsFixed(5)) {
@@ -477,7 +470,7 @@ class _JobMiniMapState extends State<JobMiniMap> {
 
     List<LatLng> decoded = const [];
 
-    // --- Try Google ROUTES API (enhanced) ---
+    // --- Google ROUTES API  ---
     try {
       final req = RoutesApiRequest(
         origin: PointLatLng(widget.me!.latitude, widget.me!.longitude),
@@ -501,7 +494,7 @@ class _JobMiniMapState extends State<JobMiniMap> {
       decoded = const [];
     }
 
-    // --- Fallback: Google DIRECTIONS API (legacy) ---
+    // --- Google DIRECTIONS API (legacy) ---
     if (decoded.isEmpty) {
       try {
         _legacyClient ??= PolylinePoints(apiKey: apiKey);
@@ -552,7 +545,6 @@ class _JobMiniMapState extends State<JobMiniMap> {
         Polyline(points: _route, strokeWidth: 5, color: Colors.blue),
       );
     } else if (widget.me != null) {
-      // Straight dashed fallback when no polyline (no key / APIs not enabled)
       polylines.add(
         Polyline(
           points: [widget.me!, widget.target],
@@ -588,7 +580,7 @@ class _JobMiniMapState extends State<JobMiniMap> {
   }
 }
 
-/// ---------- Vertical progress timeline (enhanced) ----------
+// ---------- Vertical progress timeline ----------
 
 class ProgressTimeline extends StatelessWidget {
   const ProgressTimeline({
@@ -625,7 +617,7 @@ class ProgressTimeline extends StatelessWidget {
 
     Widget dot(int i) {
       final done = (stages[_items[i][0]] ?? false) == true;
-      final active = i == cur + 1 && !done; // the next actionable step
+      final active = i == cur + 1 && !done; 
       final color = done
           ? const Color(0xFF10B981)
           : (active ? const Color(0xFF2563EB) : const Color(0xFFCBD5E1));
@@ -719,7 +711,7 @@ class ProgressTimeline extends StatelessWidget {
   }
 }
 
-/// ---------- Action bar (Accept / Abort) ----------
+// ---------- Accept / Abort task ----------
 
 class DriverActionBar extends StatelessWidget {
   const DriverActionBar({
@@ -750,7 +742,7 @@ class DriverActionBar extends StatelessWidget {
       );
     }
     return OutlinedButton.icon(
-      onPressed: onAbort, // dialog handled in page (keeps this widget simple)
+      onPressed: onAbort, 
       icon: const Icon(Icons.cancel),
       label: const Text('Abort Job'),
       style: OutlinedButton.styleFrom(

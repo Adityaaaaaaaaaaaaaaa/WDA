@@ -27,7 +27,6 @@ class URequestService {
       final String taskId = "${user.uid}_${_uuid.v4()}";
       final DateTime now = DateTime.now();
 
-      // breakdown
       final int creationPoints = (ecoPoints / 2).floor();
       final int completionPoints = ecoPoints - creationPoints;
 
@@ -88,7 +87,7 @@ class URequestService {
       // save globally
       await _db.collection("tasks").doc(taskId).set(taskData);
 
-      // save inside user's history (with minimal fields)
+      // save inside user's history
       await _db
           .collection("users")
           .doc(user.uid)
@@ -115,7 +114,7 @@ class URequestService {
     }
   }
 
-  /// Award remaining completion points when task is marked completed
+  // Award remaining completion points when task is marked completed
   Future<void> awardCompletionPoints(String taskId, String userId) async {
     final taskRef = _db.collection("tasks").doc(taskId);
     final taskSnap = await taskRef.get();

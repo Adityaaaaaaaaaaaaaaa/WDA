@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -27,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      // 🟢 New / not signed-in user → Onboarding
+      // New / not signed-in user → Onboarding
       Future.microtask(() => context.push('/onboarding'));
       return;
     }
@@ -41,10 +43,10 @@ class _SplashScreenState extends State<SplashScreen> {
       final data = doc.data();
 
       if (data == null || (data['roleSetupCompleted'] ?? false) == false) {
-        // 🟠 Signed in but no role setup → UserRole page
+        // Signed in but no role setup → UserRole page
         Future.microtask(() => context.push('/userRole'));
       } else {
-        final role = data['role'] ?? 'disposer'; // default to disposer if missing
+        final role = data['role'] ?? 'disposer';
 
         SnackbarUtils.alert(
           context,
@@ -57,15 +59,12 @@ class _SplashScreenState extends State<SplashScreen> {
         );
 
         if (role == 'driver') {
-          // 👷 Driver role → Driver Home
           Future.microtask(() => context.push('/dHome'));
         } else {
-          // 🏡 Disposer (user) role → User Home
           Future.microtask(() => context.push('/uHome'));
         }
       }
     } catch (e) {
-      // 🔴 Firestore fetch failed → Fallback to Onboarding
       Future.microtask(() => context.push('/onboarding'));
     }
   }

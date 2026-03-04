@@ -1,6 +1,3 @@
-// lib/features/user/widgets/status_chip.dart
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../model/task_model.dart';
@@ -19,7 +16,6 @@ class StatusChipTheme {
   }
 }
 
-/// Minimal outlined chip with subtle neon border (no 3D fill).
 class OutlinedChip extends StatelessWidget {
   final String label;
   final Color color;
@@ -43,7 +39,6 @@ class OutlinedChip extends StatelessWidget {
             Icon(icon, size: 12.5.sp, color: color),
             SizedBox(width: 6.w),
           ],
-          // 🔧 key change: make text flexible + wrap + ellipsis
           Flexible(
             child: Text(
               label,
@@ -54,7 +49,7 @@ class OutlinedChip extends StatelessWidget {
                 fontSize: 11.5.sp,
                 fontWeight: FontWeight.w600,
                 color: color,
-                height: 1.15, // nicer line height
+                height: 1.15,
               ),
             ),
           ),

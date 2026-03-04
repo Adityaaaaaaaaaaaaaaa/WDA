@@ -8,13 +8,6 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 
-// NOTE: we purposely DO NOT import flutter_map_tile_caching here,
-// so the file compiles cleanly even if FMTC isn't set up yet.
-// When you're ready to enable caching, see the steps after the file.
-
-/* ===============================
-   SHARED DECOR + COLORS
-   =============================== */
 BoxDecoration _boxDecoration(Color color) => BoxDecoration(
   borderRadius: BorderRadius.circular(18.r),
   boxShadow: [
@@ -71,9 +64,6 @@ BoxDecoration _card({double radius = 20, double elevation = 6}) => BoxDecoration
   ],
 );
 
-/* ===============================
-   BASIC INPUTS (unchanged logic)
-   =============================== */
 class EnhancedDropdown extends StatelessWidget {
   final String label;
   final String? value;
@@ -243,9 +233,6 @@ class EnhancedTextField extends StatelessWidget {
   }
 }
 
-/* ===============================
-   ADDRESS PICKER FIELD
-   =============================== */
 class AddressPickerField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -305,9 +292,6 @@ class _PickResult {
   const _PickResult(this.display, this.latLng);
 }
 
-/* ===============================
-   ADDRESS PICKER SHEET (flutter_map)
-   =============================== */
 class AddressPickerSheet extends StatefulWidget {
   final LatLng initialCenter;
   final double initialZoom;
@@ -449,7 +433,7 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                       urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.example.wda',
                       retinaMode: true,
-                      tileProvider: NetworkTileProvider(), // (caching re-enable steps below)
+                      tileProvider: NetworkTileProvider(),
                       maxNativeZoom: 19,
                     ),
                     const CurrentLocationLayer(
@@ -535,9 +519,9 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                   ),
                 ),
 
-                // Compass (floating)
+                // Compass 
                 Positioned(
-                  top: 75.h,        // just below the top bar; adjust if you like
+                  top: 75.h,  
                   right: 15.w,
                   child: _FloatingCircleButton(
                     tooltip: 'Face North',
@@ -594,7 +578,6 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                         SizedBox(height: 10.h),
                         Row(
                           children: [
-                            // Left: Use my location (single chip)
                             Expanded(
                               child: Align(
                                 alignment: Alignment.centerLeft,
@@ -608,7 +591,6 @@ class _AddressPickerSheetState extends State<AddressPickerSheet> {
                             ),
                             SizedBox(width: 8.w),
 
-                            // Right: Confirm (shrinks if space is tight)
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               child: _ConfirmButton(
@@ -662,7 +644,6 @@ class _ActionChipButton extends StatelessWidget {
             children: [
               Icon(icon, size: 18.sp, color: color),
               SizedBox(width: 6.w),
-              // 👇 This Flexible fixes Row overflows in tight spaces
               Flexible(
                 child: Text(
                   label,

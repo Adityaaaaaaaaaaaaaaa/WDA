@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-//Project color constants.
 class AppColors {
-  // Light Theme Colors
   static const Color lightBackground = Color(0xFFE5F1FA);
   static const Color lightCard = Colors.white;
   static const Color lightPrimary = Color(0xFF0B8FAC);
@@ -10,8 +8,6 @@ class AppColors {
   static const Color lightText = Colors.black;
   static const Color lightSubtleText = Color(0xFF858585);
 
-  // Dark Theme Colors
-  // static const Color darkBackground = Color.fromARGB(255, 31, 41, 48); //old colour
   static const Color darkBackground = Color(0xFF303537); //#303537
   static const Color darkCard = Color(0xFF232526);
   static const Color darkPrimary = Color(0xFF189AB4);
@@ -21,22 +17,18 @@ class AppColors {
 
 }
 
-/// Helper to get the correct background color
 Color bgColor(BuildContext context, {Color? custom}) {
   return custom ?? Theme.of(context).scaffoldBackgroundColor;
 }
 
-/// Helper to get the correct card color
 Color cardColor(BuildContext context, {Color? custom}) {
   return custom ?? Theme.of(context).cardColor;
 }
 
-/// Helper to get the correct primary text color
 Color textColor(BuildContext context, {Color? custom}) {
   return custom ?? Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black;
 }
 
-/// Helper to get subtle (secondary) text color
 Color subtleTextColor(BuildContext context, {Color? custom}) {
   final brightness = Theme.of(context).brightness;
   return custom ??

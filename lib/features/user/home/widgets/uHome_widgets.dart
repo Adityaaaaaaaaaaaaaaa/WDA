@@ -1,10 +1,8 @@
-// ignore_for_file: deprecated_member_use
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-
 import '../../../../model/task_model.dart';
 
 class UHomeContent extends StatelessWidget {
@@ -19,7 +17,6 @@ class UHomeContent extends StatelessWidget {
 
     final tasks = FirebaseFirestore.instance.collection('tasks');
 
-    // 1) The user’s *in-progress* pickup (their own request currently being handled)
     final inProgressStream = tasks
         .where('userId', isEqualTo: uid)
         .where('status', isEqualTo: 'in_progress')
@@ -27,7 +24,6 @@ class UHomeContent extends StatelessWidget {
         .limit(1)
         .snapshots();
 
-    // 2) The user’s *next scheduled* pickup (earliest first by pickupDateTime; fallback acceptedAt/createdAt)
     final scheduledStream = tasks
         .where('userId', isEqualTo: uid)
         .where('status', isEqualTo: 'scheduled')
@@ -41,7 +37,6 @@ class UHomeContent extends StatelessWidget {
         const _GreetingCard(),
         SizedBox(height: 18.h),
 
-        // In-Progress section (if any)
         Text("In Progress", style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800)),
         SizedBox(height: 10.h),
         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -62,7 +57,6 @@ class UHomeContent extends StatelessWidget {
 
         SizedBox(height: 18.h),
 
-        // Next Scheduled section (if any)
         Text("Next Scheduled Pickup", style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w800)),
         SizedBox(height: 10.h),
         StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -85,9 +79,6 @@ class UHomeContent extends StatelessWidget {
   }
 }
 
-/// =======================
-/// Greeting + Eco points + Quick Actions
-/// =======================
 class _GreetingCard extends StatelessWidget {
   const _GreetingCard();
 
@@ -122,7 +113,6 @@ class _GreetingCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row with avatar + greeting
               Row(
                 children: [
                   CircleAvatar(
@@ -251,9 +241,6 @@ class _QuickActionButton extends StatelessWidget {
   }
 }
 
-/// =======================
-/// Pickup Card (User view)
-/// =======================
 class _PickupCard extends StatelessWidget {
   const _PickupCard({
     required this.task,
@@ -303,7 +290,6 @@ class _PickupCard extends StatelessWidget {
             ]),
             SizedBox(height: 10.h),
 
-            // date/time + address
             Row(children: [
               const Icon(Icons.event_rounded, size: 16, color: Colors.grey),
               SizedBox(width: 6.w),
@@ -337,7 +323,6 @@ class _PickupCard extends StatelessWidget {
   }
 }
 
-/// Simple skeleton while loading
 class _SkeletonCard extends StatelessWidget {
   const _SkeletonCard();
 

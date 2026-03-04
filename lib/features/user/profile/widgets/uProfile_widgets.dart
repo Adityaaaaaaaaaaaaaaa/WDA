@@ -1,9 +1,7 @@
-// ignore_for_file: deprecated_member_use
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-/// ===== Reusable section shell =====
 class SectionCard extends StatelessWidget {
   const SectionCard({
     super.key,
@@ -69,7 +67,6 @@ class SectionCard extends StatelessWidget {
   }
 }
 
-/// ===== Profile Header =====
 class ProfileHeaderCard extends StatelessWidget {
   const ProfileHeaderCard({
     super.key,
@@ -245,7 +242,6 @@ class InfoRow extends StatelessWidget {
   }
 }
 
-/// ===== Unified Eco Tier (same mapping as Achievements) =====
 class _Tier {
   final int min;
   final int? max;
@@ -264,7 +260,7 @@ class EcoTierProfile {
     _Tier(10000, 50000, 'Neighborhood Savior'),
     _Tier(50000, 100000, 'Recycling Demigod'),
     _Tier(100000, 500000, 'Bin Whisperer'),
-    _Tier(500000, 1000000, 'Mother Earth’s Favorite Mistake'),
+    _Tier(500000, 1000000, 'Mother Earth\'s Favorite Mistake'),
     _Tier(1000000, null, 'The Trash Messiah'),
   ];
 
@@ -276,7 +272,6 @@ class EcoTierProfile {
   }
 }
 
-/// ===== Eco Points Card =====
 class EcoPointsCard extends StatelessWidget {
   const EcoPointsCard({super.key, required this.points, required this.onSeeAll});
   final int points;
@@ -285,7 +280,7 @@ class EcoPointsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tier = EcoTierProfile.at(points);
-    final nextTarget = tier.max; // null => top
+    final nextTarget = tier.max; 
     final progress =
         nextTarget == null ? 1.0 : (points / nextTarget).clamp(0, 1).toDouble();
 
@@ -318,7 +313,7 @@ class EcoPointsCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: 10.h),
-          const _AnimatedProgressBar(), // background animated aura
+          const _AnimatedProgressBar(),
           SizedBox(height: 6.h),
           ClipRRect(
             borderRadius: BorderRadius.circular(8.r),
@@ -337,7 +332,6 @@ class EcoPointsCard extends StatelessWidget {
   }
 }
 
-/// animated glow under the progress bar
 class _AnimatedProgressBar extends StatefulWidget {
   const _AnimatedProgressBar();
 
@@ -389,7 +383,6 @@ class _AnimatedProgressBarState extends State<_AnimatedProgressBar>
   }
 }
 
-/// colorful shifting linear progress
 class _LinearFancyProgress extends StatefulWidget {
   const _LinearFancyProgress({required this.value});
   final double value;
@@ -474,7 +467,6 @@ class _LevelDot extends StatelessWidget {
   }
 }
 
-/// ===== Achievements preview (visual, sarcastic labels) =====
 class AchievementsPreviewCard extends StatelessWidget {
   const AchievementsPreviewCard({super.key, required this.onSeeAll});
   final VoidCallback onSeeAll;
@@ -548,7 +540,6 @@ class _BadgePill extends StatelessWidget {
   }
 }
 
-/// ===== Bottom sheet used to edit one field (unchanged logic) =====
 class EditFieldSheet extends StatefulWidget {
   const EditFieldSheet({
     super.key,

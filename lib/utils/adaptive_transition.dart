@@ -1,25 +1,22 @@
-// lib/utils/adaptive_transition.dart
 import 'package:flutter/material.dart';
 
 enum PageWeight { light, medium, heavy }
 
 typedef _Builder = Widget Function(Widget child, Animation<double> a);
 
-// Material 3 emphasized curves (snappy + smooth)
 const Cubic _kEmphasizedDecelerate = Cubic(0.05, 0.7, 0.1, 1.0);
 const Cubic _kEmphasizedAccelerate = Cubic(0.3, 0.0, 0.8, 0.15);
 
 class TransitionSpec {
   final Duration duration;
-  final Curve curveIn;   // applied to incoming child
-  final Curve curveOut;  // applied to outgoing child
+  final Curve curveIn;   
+  final Curve curveOut;  
   // ignore: library_private_types_in_public_api
   final _Builder builder;
 
   const TransitionSpec(this.duration, this.curveIn, this.curveOut, this.builder);
 
   factory TransitionSpec.from(PageWeight w, {required bool stressed}) {
-    // Under load: cheapest and smoothest (keeps 60/120Hz happy)
     if (stressed) {
       return TransitionSpec(
         const Duration(milliseconds: 220),
@@ -31,8 +28,6 @@ class TransitionSpec {
 
     switch (w) {
       case PageWeight.heavy:
-        // Fade + micro-scale + micro vertical settle.
-        // Masks expensive first-builds (images/layout) without feeling “zoomy”.
         return TransitionSpec(
           const Duration(milliseconds: 260),
           _kEmphasizedDecelerate,
@@ -54,7 +49,6 @@ class TransitionSpec {
         );
 
       case PageWeight.medium:
-        // Short horizontal slide + fade — reads as quick but not abrupt.
         return TransitionSpec(
           const Duration(milliseconds: 200),
           _kEmphasizedDecelerate,
@@ -71,7 +65,6 @@ class TransitionSpec {
         );
 
       case PageWeight.light:
-      // Fade-through with a tiny settle scale; feels instantaneous.
         return TransitionSpec(
           const Duration(milliseconds: 160),
           _kEmphasizedDecelerate,
@@ -88,7 +81,6 @@ class TransitionSpec {
   }
 }
 
-/// Declare your route weights here; tweak any time.
 const Map<String, PageWeight> kRouteWeights = {
   '/splash': PageWeight.light,
   '/onboarding': PageWeight.light,

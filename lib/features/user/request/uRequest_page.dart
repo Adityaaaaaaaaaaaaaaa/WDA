@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
@@ -20,7 +22,6 @@ class _URequestPageState extends State<URequestPage>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
-  // Selections
   Set<String> _wasteTypes = {};
   String? _size;
   String? _urgency;
@@ -33,7 +34,6 @@ class _URequestPageState extends State<URequestPage>
   // ignore: unused_field
   LatLng? _addressLatLng;
 
-  // Animations
   late AnimationController _animController;
 
   final Map<String, Map<String, dynamic>> _sizeDetails = {
@@ -157,7 +157,7 @@ class _URequestPageState extends State<URequestPage>
                 ),
                 SizedBox(height: 20.h),
 
-                // Address (with map picker)
+                // Address
                 AnimatedGlassCard(
                   animation: _animController,
                   title: "Location 📍",

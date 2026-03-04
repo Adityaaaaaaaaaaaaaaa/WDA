@@ -1,6 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
@@ -49,21 +46,14 @@ class _SignInPageState extends State<SignInPage> with TickerProviderStateMixin {
 
   Future<void> _signInWithGoogle(BuildContext context) async {
     try {
-      // Ensure any previous session is cleared
       await GoogleSignIn.instance.signOut();
-
-      // 🔹 New API → interactive sign in
-      final googleUser = await GoogleSignIn.instance.authenticate(); // cancelled
-
-      // Get authentication tokens
+      final googleUser = await GoogleSignIn.instance.authenticate();
       final googleAuth = googleUser.authentication;
-
       final credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-
       context.push('/splash');
     } catch (e) {
       SnackbarUtils.alert(
@@ -89,7 +79,7 @@ class _SignInPageState extends State<SignInPage> with TickerProviderStateMixin {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFFE6F4EA), // light eco green
+              Color(0xFFE6F4EA),
               Color(0xFFB7E4C7),
               Color(0xFF95D5B2),
             ],
